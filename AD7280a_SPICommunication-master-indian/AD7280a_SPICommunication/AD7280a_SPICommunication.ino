@@ -20,6 +20,7 @@
 #define _PDEBUG
 #define _EN_PIN	5
 
+long int tempo;
 struct ad7280_state ADinst;
 uint16_t valCh[24]; // Statically assigned the memory for only 2 two AD7280a channels. If you need more then declare more or write your own routine.
 void setup()
@@ -35,6 +36,7 @@ void setup()
   ADinst.cell_threshlow = 0x00;
   ADinst.aux_threshlow = 0x00;
   digitalWrite(_EN_PIN, HIGH);
+  
 
 return ;
 }
@@ -274,32 +276,45 @@ do
 		Serial.println("");
 		Serial.println("");
 		Serial.println("=================");
-		Serial.println("Proc 9: Print all the ADC counts of channels");	
-
+		Serial.println("Proc 9: Print all the ADC counts of channels, 0 to stop");	
 		
+		int b;
+    		int valCh_true;
+		b = Serial.read();
 
+    		int timezero= millis();
+		
+		while(b!='0') {
 
-		ad7280_read_all_channels(&ADinst, ADinst.scan_cnt,
+      tempo= millis()-timezero;
+			ad7280_read_all_channels(&ADinst, ADinst.scan_cnt,
 					&valCh[0]);
 
-		
-		for(i =0 ; i < ADinst.scan_cnt ; i++ )
-		{
-			if( ((i/6)%2) == 0 )
-			//if(1)
+		  Serial.print(tempo, DEC);
+     		  Serial.print('\t');
+			for(i =0 ; i < ADinst.scan_cnt ; i++ )
 			{
-			Serial.print("VIN_");
-			Serial.print( (1+i),DEC );
-			Serial.print(": ");
-			Serial.println(valCh[i],DEC);
+				if( ((i/6)%2) == 0 )
+				//if(1)
+				{
+				//Serial.print("VIN_");
+				//Serial.print( (1+i),DEC );
+				//Serial.print(": ");
+        			valCh_true=valCh[i]+1000;
+       				Serial.print(valCh_true,DEC);
+				Serial.print('\t');
+				}
+				else
+				{
+				//Serial.print("AUX_");
+				//Serial.print( (1+i),DEC );
+				//Serial.print(": ");
+				Serial.print(valCh[i],DEC);
+        			Serial.print('\t');
+				}
 			}
-			else
-			{
-			Serial.print("AUX_");
-			Serial.print( (1+i),DEC );
-			Serial.print(": ");
-			Serial.println(valCh[i],DEC);
-			}
+      			Serial.println('\n');
+			b = Serial.read();
 		}
 	}
 
@@ -360,8 +375,7 @@ void transferspi32( uint32_t *val)
   delay(100);
   digitalWrite(_SS,HIGH);
   *val = (uint32_t) (((uint32_t) h_h <<24) | ((uint32_t) h_l <<16) | ((uint32_t) l_h << 8) | l_l);
-  Serial.print(*val);
-  Serial.print("\t");
+
  #ifndef _PDEBUG
   
   Serial.println("Receiving SPI32bit");
@@ -415,4 +429,3 @@ void show32bit( uint32_t *val)
   Serial.println(l_l,BIN);
   return;
 }
-
