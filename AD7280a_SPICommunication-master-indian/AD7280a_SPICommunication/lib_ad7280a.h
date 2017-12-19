@@ -129,4 +129,3 @@ struct ad7280_state {
 struct spi_device {
 	int8_t spi;
 };
-
