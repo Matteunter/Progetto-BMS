@@ -162,6 +162,22 @@ static uint32_t ad7280_read_all_channels(struct ad7280_state *st, uint32_t cnt,
 	ret = ad7280_write(st, AD7280A_DEVADDR_MASTER, AD7280A_READ, 1,
 			   AD7280A_CELL_VOLTAGE_1 << 2);
 
+	/* Write on Ctrl_LB of "all device" to set termistor function.*/
+
+	int thermistor_config = 
+		AD7280A_CTRL_LB_ACQ_TIME_1600ns |
+		AD7280A_CTRL_LB_MUST_SET |
+		AD7280A_CTRL_LB_THERMISTOR_EN |
+		AD7280A_CTRL_LB_INC_DEV_ADDR |
+		AD7280A_CTRL_LB_DAISY_CHAIN_RB_EN |
+		st->ctrl_lb;
+	Serial.print("thermistor_config:");
+	Serial.print(thermistor_config);
+	ret = ad7280_write(st, AD7280A_DEVADDR_MASTER, AD7280A_CONTROL_LB, 1,
+			thermistor_config);
+
+
+
 	/*Write to all the Control HB of all the devices, 
 	select all channels, read all, Start conversion at CS Start*/
 	ret = ad7280_write(st, AD7280A_DEVADDR_MASTER, AD7280A_CONTROL_HB, 1,
@@ -169,6 +185,8 @@ static uint32_t ad7280_read_all_channels(struct ad7280_state *st, uint32_t cnt,
 			AD7280A_CTRL_HB_CONV_RES_READ_ALL |
 			AD7280A_CTRL_HB_CONV_START_CS |
 			st->ctrl_hb);
+
+
 
 	ad7280_delay(st);
 
