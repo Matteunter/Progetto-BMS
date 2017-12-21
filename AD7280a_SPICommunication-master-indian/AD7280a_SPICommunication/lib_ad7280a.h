@@ -46,6 +46,9 @@
 #define AD7280A_AUX_ADC_UNDERVOLTAGE	0x12 /* D7 to D0, Read/write */
 #define AD7280A_ALERT			0x13 /* D7 to D0, Read/write */
 #define AD7280A_CELL_BALANCE		0x14 /* D7 to D0, Read/write */
+
+
+
 #define AD7280A_CB1_TIMER		0x15 /* D7 to D0, Read/write */
 #define AD7280A_CB2_TIMER		0x16 /* D7 to D0, Read/write */
 #define AD7280A_CB3_TIMER		0x17 /* D7 to D0, Read/write */
@@ -129,3 +132,4 @@ struct ad7280_state {
 struct spi_device {
 	int8_t spi;
 };
+

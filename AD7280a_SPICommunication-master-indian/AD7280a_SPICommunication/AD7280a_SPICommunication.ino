@@ -317,6 +317,12 @@ do
 			b = Serial.read();
 		}
 	}
+//  if( a == 'k')  // Read all and print sum
+//  {
+//    ad7280_cell_balance_enable (&ADinst, 00001100, 00011000);
+//     
+//  }
+
 
 	delay(500);
 }while(1);
@@ -429,3 +435,4 @@ void show32bit( uint32_t *val)
   Serial.println(l_l,BIN);
   return;
 }
+

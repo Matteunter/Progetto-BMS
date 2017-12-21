@@ -171,8 +171,10 @@ static uint32_t ad7280_read_all_channels(struct ad7280_state *st, uint32_t cnt,
 		AD7280A_CTRL_LB_INC_DEV_ADDR |
 		AD7280A_CTRL_LB_DAISY_CHAIN_RB_EN |
 		st->ctrl_lb;
-	Serial.print("thermistor_config:");
-	Serial.print(thermistor_config);
+	//Serial.print("thermistor_config:");
+	//Serial.print(thermistor_config);
+	
+
 	ret = ad7280_write(st, AD7280A_DEVADDR_MASTER, AD7280A_CONTROL_LB, 1,
 			thermistor_config);
 
@@ -246,3 +248,33 @@ static int8_t ad7280_chain_setup(struct ad7280_state *st)
 
 	return 255;
 }
+
+
+//// Enable function for single Cell Balancing Output
+//static void ad7280_cell_balance_enable(struct ad7280_state *st, uint8_t cell_num, uint8_t timer_sec)
+//{
+//
+//  //int timer_code = !((timer_sec / 71) << 3);         // timer in sec converted in 5 bit binary, 000 LSBs reserved
+//  //int cell_balance_reg_code = 0x14 + cell_num;      //register number of current cell
+//  //int cell_balance_code= 1 << (1+cell_num);         //code to enable selected cell, 00 LSBs reserved
+//  
+//  //Serial.println(timer_code, BIN);
+//  //Serial.println(cell_balance_reg_code, BIN);
+//  //Serial.println(cell_balance_code, BIN);
+//  
+//  ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x15, 1,
+//  timer_sec);
+// 
+//  ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x16, 1,
+//  timer_sec);
+//  
+//  ad7280_write(st, AD7280A_DEVADDR_MASTER, AD7280A_CELL_BALANCE, 1,
+//      cell_num);
+//
+//  delay(60000);
+//
+//      
+//}
+
+
+
