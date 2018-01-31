@@ -17,7 +17,7 @@
 #define _SS 10
 #endif
 
-#define _PDEBUG
+//#define _PDEBUG
 #define _EN_PIN	5
 
 long int tempo;
@@ -317,11 +317,13 @@ do
 			b = Serial.read();
 		}
 	}
-//  if( a == 'k')  // Read all and print sum
-//  {
-//    ad7280_cell_balance_enable (&ADinst, 00001100, 00011000);
-//     
-//  }
+ if( a == 'k')  // Read all and print sum
+ {
+   Serial.println("inizio");
+   ad7280_cell_balance_enable (&ADinst);
+   Serial.println("arrivato");
+     
+ }
 
 
 	delay(500);
@@ -372,7 +374,7 @@ void transferspi32( uint32_t *val)
   Serial.print(",");
   Serial.println(l_l,BIN);
 #endif
-
+  
   digitalWrite(_SS,LOW);
   h_h = SPI.transfer( ((*val)>>24) & 0xFF );  // D31-D24
   h_l = SPI.transfer( ((*val)>>16) & 0xFF );  // D23-D16
@@ -381,7 +383,7 @@ void transferspi32( uint32_t *val)
   delay(100);
   digitalWrite(_SS,HIGH);
   *val = (uint32_t) (((uint32_t) h_h <<24) | ((uint32_t) h_l <<16) | ((uint32_t) l_h << 8) | l_l);
-
+  
  #ifndef _PDEBUG
   
   Serial.println("Receiving SPI32bit");
