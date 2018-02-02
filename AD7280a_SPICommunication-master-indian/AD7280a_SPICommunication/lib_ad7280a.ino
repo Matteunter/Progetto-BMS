@@ -250,50 +250,38 @@ static int8_t ad7280_chain_setup(struct ad7280_state *st)
 }
 
 
-// Enable function for single Cell Balancing Output
-static void ad7280_cell_balance_enable(struct ad7280_state *st) //uint8_t cell_num, uint8_t timer_sec)
+// Enable function for Cell Balancing
+static void ad7280_cell_balance_enable(struct ad7280_state *st, uint8_t cell_num, uint8_t timer_sec)
 {
-
-  //int timer_code = !((timer_sec / 71) << 3);         // timer in sec converted in 5 bit binary, 000 LSBs reserved
-  //int cell_balance_reg_code = 0x14 + cell_num;      //register number of current cell
-  //int cell_balance_code= 1 << (1+cell_num);         //code to enable selected cell, 00 LSBs reserved
+	if (timer_sec<71) timer_sec=71;			//minimum 71.5 seconds
+	timer_sec = ((timer_sec / 71) << 3);		// timer in sec converted in 5 bit binary, 000 LSBs reserved
+	cell_num= 1 << (cell_num+1);			//code to enable selected cell, 00 LSBs reserved
   
-  //Serial.println(timer_code, BIN);
- //Serial.println(cell_balance_reg_code, BIN);
-  //Serial.println(cell_balance_code, BIN);
-
-  ad7280_write(st, AD7280A_DEVADDR(1), 0x15, 1,    // devaddr Master????
-  0x18);
-
- 
-  ad7280_write(st, AD7280A_DEVADDR(1), 0x16, 1,
-  0x18);
-
-  ad7280_write(st, AD7280A_DEVADDR(1), 0x17, 1,
-  0x18);
-
-  ad7280_write(st, AD7280A_DEVADDR(1), 0x18, 1,
-  0x18);
-
-  ad7280_write(st, AD7280A_DEVADDR(1), 0x19, 1,
-  0x18);
-
-  ad7280_write(st, AD7280A_DEVADDR(1), 0x20, 1,
-  0x18);
-
-
-  ad7280_write(st, AD7280A_DEVADDR(1), 0x14, 1,
-     0xFC);
-
- 
- // uint32_t lettura= ad7280_read(st, AD7280A_DEVADDR_MASTER,
- //    0x14);
-
-
-  //Serial.println(lettura,BIN);
+	//Serial.println("timer_code:");
+	//Serial.println(timer_code, BIN);
+	//Serial.println("cell_balance_code:");
+	//Serial.println(cell_balance_code, BIN);
   
-  delay(6000);
+	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x15, 1, timer_sec); //CB Timers
+	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x16, 1, timer_sec);
+	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x17, 1, timer_sec);
+	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x18, 1, timer_sec);
+	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x19, 1, timer_sec);
+	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x1A, 1, timer_sec);
+	
+	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x14, 1, cell_num); //Cell balance
 
+ /* 
+	//Cell balance register read (you need to activate debug first)
+	uint32_t var_temp;
+	var_temp=0x01C2B6E2;
+	transferspi32(&var_temp); //probabilmente si può rimuovere
+	var_temp=0x038A12B2;
+	transferspi32(&var_temp);
+	var_temp=0xF800030A;
+	transferspi32(&var_temp);
+*/
+	
  return 0;
       
 }
