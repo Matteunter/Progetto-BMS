@@ -317,10 +317,17 @@ do
 			b = Serial.read();
 		}
 	}
- if( a == 'k')  // Read all and print sum
+ if( a == 'k')  // cell balance
  {
+   uint8_t cell_num, cell_time;
+	 
+   Serial.println("Insert cell number (from 1 to 6)");
+   cell_num = Serial.read();
+   Serial.println("Insert time in seconds");
+   cell_time = Serial.read();
+	 
    Serial.println("inizio");
-   ad7280_cell_balance_enable (&ADinst);
+   ad7280_cell_balance_enable (&ADinst, cell_num, cell_time); //per ora attiva cella 2 per 71.5sec
    Serial.println("arrivato");
      
  }
