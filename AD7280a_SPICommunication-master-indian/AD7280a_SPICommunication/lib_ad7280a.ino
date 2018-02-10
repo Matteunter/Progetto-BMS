@@ -251,26 +251,39 @@ static int8_t ad7280_chain_setup(struct ad7280_state *st)
 
 
 // Enable function for Cell Balancing
-static void ad7280_cell_balance_enable(struct ad7280_state *st, uint8_t cell_num, uint8_t timer_sec)
+static void ad7280_cell_balance_enable(struct ad7280_state *st, byte cell_num, uint8_t timer_sec)
 {
 	if (timer_sec<71) timer_sec=71;			//minimum 71.5 seconds
 	timer_sec = ((timer_sec / 71) << 3);		// timer in sec converted in 5 bit binary, 000 LSBs reserved
-	cell_num= 1 << (cell_num+1);			//code to enable selected cell, 00 LSBs reserved
+	
+	//cell_num= 1 << (cell_num+1);			//code to enable selected cell, 00 LSBs reserved
   
 	//Serial.println("timer_code:");
 	//Serial.println(timer_code, BIN);
 	//Serial.println("cell_balance_code:");
 	//Serial.println(cell_balance_code, BIN);
-  
-	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x15, 1, timer_sec); //CB Timers
-	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x16, 1, timer_sec);
-	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x17, 1, timer_sec);
-	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x18, 1, timer_sec);
-	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x19, 1, timer_sec);
-	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x1A, 1, timer_sec);
-	
-	ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x14, 1, cell_num); //Cell balance
 
+  byte cell_num_LSB =0x00;
+  int i=5;
+  while(i>=0) {
+    
+    //Serial.println(cell_num>>i, BIN);
+    //Serial.println((cell_num>>i)& 0x01, BIN);
+    if (((cell_num>>i)&(0x01)) == 1){
+
+    ad7280_write(st, AD7280A_DEVADDR_MASTER, (0x1A-i), 1, timer_sec);
+    
+    cell_num_LSB = cell_num_LSB | (0x01<<(5-i));
+
+    //Serial.println(i);
+    }
+    
+    i--;
+    
+	
+  }
+  Serial.println(cell_num_LSB,BIN);
+  ad7280_write(st, AD7280A_DEVADDR_MASTER, 0x14, 1, cell_num_LSB<<2); //Cell balance
  /* 
 	//Cell balance register read (you need to activate debug first)
 	uint32_t var_temp;
@@ -285,6 +298,3 @@ static void ad7280_cell_balance_enable(struct ad7280_state *st, uint8_t cell_num
  return 0;
       
 }
-
-
-
