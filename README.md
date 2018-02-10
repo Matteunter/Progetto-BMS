@@ -1,5 +1,6 @@
-# Progetto-BMS
+# BMS - Project
 
-Nella cartella Arduino vanno messe tutte le prove di comunicazione SPI con il BMS
+The code in the "AD7280a_SPICommunication-master-indian" folder is in C, and its use is
+to manually activate the single functions of the AD2780.
 
-In futuro verrà aggiunta la sezione per FPGA (speriamo)
+The C++ code in the "BMS c++ driver" folder should automatically control all BMS functions
