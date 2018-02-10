@@ -45,3 +45,4 @@ class THERMISTOR{
 };
 
 #endif /* THERMISTOR_H */
+

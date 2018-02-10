@@ -55,9 +55,10 @@ void transferspi32( uint32_t *val, int slaveselect)
   h_l = SPI.transfer( ((*val)>>16) & 0xFF );  // D23-D16
   l_h = SPI.transfer( ((*val)>>8) & 0xFF );   // D15-D08
   l_l = SPI.transfer( (*val) & 0xFF );        // D07-D00
-  delay(100);
+  delay(1);
   digitalWrite(slaveselect,HIGH);
   *val = (uint32_t) (((uint32_t) h_h <<24) | ((uint32_t) h_l <<16) | ((uint32_t) l_h << 8) | l_l);
+  delay(1);
   
  #ifndef _PDEBUG
   
@@ -82,3 +83,4 @@ void transferspi32( uint32_t *val, int slaveselect)
 
   return ; // Always return zero. Even if the things are not successful
 }
+

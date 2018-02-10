@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "AD7280.h"
 #include "thermistor.h"
+#include "current_sensor.h"
 
 
 
@@ -21,6 +22,7 @@ long int startup_time;
 AD7280 myAD;                  //1 AD class allocation
 THERMISTOR res1;              // 1 onboard resistor class allocation
 THERMISTOR ntc1;            // 6 cell resistor class allocation
+CURRENT_SENSOR curr_val;
 
 int CELL_NUMBER = 6;
 byte a;
@@ -28,7 +30,7 @@ byte a;
 int cell_current;
 long int curr_time;
 int16_t board_temp;
-
+byte current_voltage;
 
 
 void setup() {
@@ -42,13 +44,12 @@ void setup() {
 
   ntc1.init(CELL_NTC);      //initialize resistor as cell ntc
   
+  //curr_val.init(ACS712);
+
+  int i = 0;    
+  Serial.print("Time\t");
 
   
-
-           
-      
-  Serial.print("Time\t");
-  int i;
   for(i =0 ; i < myAD.ADinst.scan_cnt ; i++ )
     {
       if ((i/(CELL_NUMBER) %2) == 0 )
@@ -86,7 +87,8 @@ void loop() {
    a= Serial.read();
    uint16_t adc_channel[myAD.ADinst.scan_cnt];
 
-
+   int i;
+ 
    myAD.read_all( myAD.ADinst.scan_cnt, &adc_channel[0]);
    //calcolo temperatura degli ntc e rimetto dentro adc-channel
    
@@ -97,27 +99,40 @@ void loop() {
 
    Serial.print(curr_time, DEC);
    Serial.print("\t");
-   int i;
 
-   for(i =0 ; i < myAD.ADinst.scan_cnt ; i++ )		// print voltages and temperature
+
+   for(i =0 ; i < (myAD.ADinst.scan_cnt)/2 ; i++ )		// print voltages and temperature
     {
-      Serial.print(adc_channel[i], DEC);
+      Serial.print(adc_channel[i], DEC);   
+      Serial.print("\t");
+    }
+   for( ; i < myAD.ADinst.scan_cnt ; i++ )   // print voltages and temperature
+    {
+      Serial.print(ntc1.getTemperature(adc_channel[i]), DEC);
       Serial.print("\t");
     }
 
    Serial.print(board_temp, DEC);   		//print board temperature
    Serial.print("\t");
 
-
-   Serial.print("CURRENT");
-   Serial.print("\n");
+   current_voltage = analogRead(A1);
+   //current_voltage= (current_voltage*5.000/1024.000);//-2.5)/0.185;
+   Serial.print(current_voltage,BIN);
 
    
+   Serial.print("\n");
+
+    
 
   return;
 
+  
+
+
+
+  
+  
+  
+  
   }
-
-
-
 

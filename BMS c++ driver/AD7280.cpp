@@ -67,12 +67,82 @@ delay(ADinst.readback_delay_ms);
 
 
 
+int8_t AD7280::chain_setup()				// Daisy chain setup returns the number of devices or error code.
+{
+	uint32_t val;
+	uint8_t n;
+	
+	writereg(AD7280A_DEVADDR_MASTER, AD7280A_CONTROL_LB, 1,			// To reset the AD7280a.
+			AD7280A_CTRL_LB_DAISY_CHAIN_RB_EN |
+			AD7280A_CTRL_LB_LOCK_DEV_ADDR |
+			AD7280A_CTRL_LB_MUST_SET |
+			AD7280A_CTRL_LB_SWRST |
+			ADinst.ctrl_lb);
+	
+	writereg(AD7280A_DEVADDR_MASTER, AD7280A_CONTROL_LB, 1,			// Lock to the new address and 
+			AD7280A_CTRL_LB_DAISY_CHAIN_RB_EN |
+			AD7280A_CTRL_LB_LOCK_DEV_ADDR |
+			AD7280A_CTRL_LB_MUST_SET |
+			ADinst.ctrl_lb);
+	
+	
+	writereg(AD7280A_DEVADDR_MASTER, AD7280A_READ, 1,			// Set the read register of all the devices to AD7280A_CONTROL_LB
+			AD7280A_CONTROL_LB << 2);
+
+	for (n = 0; n <= AD7280A_MAX_CHAIN; n++) {
+		read32(&val);
+		
+		if (val == 0) 							// If we get an Empty frame then we end the enumeration.
+			return n - 1; 						// Minimum is 0 device excluding the master
+
+		if (check_crc(val))
+			return 200;
+
+		if (n != AD7280A_DEVADDR(val >> 27))
+			return 200;
+	}
+
+	return 255;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//	CONSTRUCTOR MEMBER
+
+AD7280::AD7280(){
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+//	PUBLIC MEMBERS
+//////////////////////////////////////////////////////////////////////////////
+
 int8_t AD7280::read32(uint32_t *val)
 {
 	*val = AD7280A_READ_TXVAL;	 //0xF800030A
 	transferspi32(val, 10); 		// received value will be in <val>
 	return 0;
 }
+
 
 
 
@@ -199,7 +269,8 @@ uint32_t AD7280::read_all(uint32_t cnt, uint16_t *array)			/*Write to all the Co
 		if (check_crc(tmp))
 			return 0xFFF;
 
-			array[i] = ((tmp >> 11) & 0xFFF);
+			if (i < cnt/2) array[i] = ((tmp >> 11) & 0xFFF)+1000; //OFFSETTTTTTTTTT da aggiungere perché l'adc è nabbo;
+      else array[i] = ((tmp >> 11) & 0xFFF);                //ygefesfsdckhsd
 		/* only sum cell voltages */
 		if (((tmp >> 23) & 0xF) <= AD7280A_CELL_VOLTAGE_6)
 		{
@@ -213,49 +284,6 @@ uint32_t AD7280::read_all(uint32_t cnt, uint16_t *array)			/*Write to all the Co
 }
 
 
-int8_t AD7280::chain_setup()				// Daisy chain setup returns the number of devices or error code.
-{
-	uint32_t val;
-	uint8_t n;
-	
-	writereg(AD7280A_DEVADDR_MASTER, AD7280A_CONTROL_LB, 1,			// To reset the AD7280a.
-			AD7280A_CTRL_LB_DAISY_CHAIN_RB_EN |
-			AD7280A_CTRL_LB_LOCK_DEV_ADDR |
-			AD7280A_CTRL_LB_MUST_SET |
-			AD7280A_CTRL_LB_SWRST |
-			ADinst.ctrl_lb);
-	
-	writereg(AD7280A_DEVADDR_MASTER, AD7280A_CONTROL_LB, 1,			// Lock to the new address and 
-			AD7280A_CTRL_LB_DAISY_CHAIN_RB_EN |
-			AD7280A_CTRL_LB_LOCK_DEV_ADDR |
-			AD7280A_CTRL_LB_MUST_SET |
-			ADinst.ctrl_lb);
-	
-	
-	writereg(AD7280A_DEVADDR_MASTER, AD7280A_READ, 1,			// Set the read register of all the devices to AD7280A_CONTROL_LB
-			AD7280A_CONTROL_LB << 2);
-
-	for (n = 0; n <= AD7280A_MAX_CHAIN; n++) {
-		read32(&val);
-		
-		if (val == 0) 							// If we get an Empty frame then we end the enumeration.
-			return n - 1; 						// Minimum is 0 device excluding the master
-
-		if (check_crc(val))
-			return 200;
-
-		if (n != AD7280A_DEVADDR(val >> 27))
-			return 200;
-	}
-
-	return 255;
-}
-
-
-
-
-
-
 void AD7280::cell_balance_enable(uint8_t cell_num, uint8_t timer_sec){
 
   if (timer_sec<71) timer_sec=71;      //minimum 71.5 seconds
@@ -263,15 +291,50 @@ void AD7280::cell_balance_enable(uint8_t cell_num, uint8_t timer_sec){
   
   uint8_t cell_code = 1 << (cell_num+1);      //code to enable selected cell, 00 LSBs reserved
 
+  
 
+  
   writereg(AD7280A_DEVADDR_MASTER, ((0x14)+cell_num), 1, timer_sec);
   
   writereg(AD7280A_DEVADDR_MASTER, 0x14, 1, cell_code);
 
   Serial.println("cell balance activated on cell");
   Serial.println(cell_num);
+
   
   
+}
+
+
+void AD7280::balance_all(byte cell_num, uint8_t timer_sec)
+{
+	if ((timer_sec<71)&&(timer_sec>1)) timer_sec=71;			//minimum 71.5 seconds
+	timer_sec = ((timer_sec / 71) << 3);		// timer in sec converted in 5 bit binary, 000 LSBs reserved
+
+
+  byte cell_num_LSB =0x00;
+  int i=5;
+  while(i>=0) { 
+    //Serial.println(cell_num>>i, BIN);
+    Serial.println((cell_num>>i)& 0x01, BIN);
+    if (((cell_num>>i)&(0x01)) == 1){
+
+    writereg(AD7280A_DEVADDR_MASTER, (0x1A-i), 1, timer_sec);
+    
+    cell_num_LSB = cell_num_LSB | (0x01<<(5-i));
+
+    //Serial.println(i);
+    }
+    
+    i--;
+    
+	
+  }
+  Serial.println(cell_num_LSB,BIN);
+  writereg(AD7280A_DEVADDR_MASTER, 0x14, 1, cell_num_LSB<<2); //Cell balance
+
+ return 0;
+      
 }
 
 
@@ -281,23 +344,12 @@ void AD7280::cell_balance_enable(uint8_t cell_num, uint8_t timer_sec){
 
 
 
-
-//	CONSTRUCTOR MEMBER
-
-AD7280::AD7280(){
-}
-
-
-
-//////////////////////////////////////////////////////////////////////////////
-//	PUBLIC MEMBERS
-//////////////////////////////////////////////////////////////////////////////
 
 bool AD7280::init(int ss) 
 {
 	ADinst.slave_select = ss;
 	setup_spi32(ADinst.slave_select);
-	Serial.begin(9600);
+	Serial.begin(57600);
 	Serial.println("Setup SPI32 for AD7280a chip");
 	ADinst.readback_delay_ms = 10; 	// 10 ms wait time.
 	ADinst.cell_threshhigh = 0xFF;	  
@@ -342,3 +394,4 @@ bool AD7280::init(int ss)
 
 
 }
+

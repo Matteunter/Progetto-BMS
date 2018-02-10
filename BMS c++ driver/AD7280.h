@@ -138,6 +138,7 @@ struct ad7280_state {
 	uint8_t			cb_mask[AD7280A_MAX_CHAIN];
 	int			slave_select;
 	struct spi_device *spi;
+ 
 };
 
 struct spi_device {
@@ -169,10 +170,13 @@ class AD7280 {
 		uint32_t read_all(uint32_t cnt, uint16_t *array);					// to read all channels starting Convertion
 
 
-    void cell_balance_enable(uint8_t cell_num, uint8_t timer_sec);
+    		void cell_balance_enable(uint8_t cell_num, uint8_t timer_sec);
+
+		void balance_all(byte cell_num, uint8_t timer_sec);
 
 
-	//private:
+	private:
+		
 		
 		
 	 	void build_crc(uint8_t *crc_tab);				// to build crc table	
@@ -194,6 +198,7 @@ class AD7280 {
 
 
 };
+
 
 
 
