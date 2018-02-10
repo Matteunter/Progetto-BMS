@@ -69,6 +69,7 @@ void setup() {
 
   Serial.print("BOARD_TEMP\t");
   Serial.print("CURRENT\t");
+  Serial.print("CHARGING STATE\t");
   Serial.print("\n");	
   startup_time = millis();
 
@@ -79,50 +80,17 @@ void setup() {
 }
 
 void loop() {
-
+  uint16_t adc_channel[myAD.ADinst.scan_cnt];
+  myAD.read_all( myAD.ADinst.scan_cnt, &adc_channel[0]);
+  board_temp= res1.getTemperature(analogRead(A4));
+  curr_time = millis()- startup_time;
+  
    
-   
- 
+  print_all (adc_channel, curr_time, cell_current, board_temp);
+  cell_current = analogRead(A1);
+  
 
-   a= Serial.read();
-   uint16_t adc_channel[myAD.ADinst.scan_cnt];
-
-   int i;
- 
-   myAD.read_all( myAD.ADinst.scan_cnt, &adc_channel[0]);
-   //calcolo temperatura degli ntc e rimetto dentro adc-channel
-   
-
-   board_temp= res1.getTemperature(analogRead(A4));   //pin onboard ntc
-   
-   curr_time = millis()- startup_time;
-
-   Serial.print(curr_time, DEC);
-   Serial.print("\t");
-
-
-   for(i =0 ; i < (myAD.ADinst.scan_cnt)/2 ; i++ )		// print voltages and temperature
-    {
-      Serial.print(adc_channel[i], DEC);   
-      Serial.print("\t");
-    }
-   for( ; i < myAD.ADinst.scan_cnt ; i++ )   // print voltages and temperature
-    {
-      Serial.print(ntc1.getTemperature(adc_channel[i]), DEC);
-      Serial.print("\t");
-    }
-
-   Serial.print(board_temp, DEC);   		//print board temperature
-   Serial.print("\t");
-
-   current_voltage = analogRead(A1);
-   //current_voltage= (current_voltage*5.000/1024.000);//-2.5)/0.185;
-   Serial.print(current_voltage,BIN);
-
-   
-   Serial.print("\n");
-
-    
+  
 
   return;
 
@@ -136,3 +104,47 @@ void loop() {
   
   }
 
+
+
+
+
+
+void print_all (int16_t * adc_channel, int curr_time, int cell_current, int board_temp) {
+
+  int i;
+ 
+   
+   //calcolo temperatura degli ntc e rimetto dentro adc-channel
+   
+
+  board_temp= res1.getTemperature(analogRead(A4));   //pin onboard ntc
+   
+   
+
+  Serial.print(curr_time, DEC);
+  Serial.print("\t");
+
+
+  for(i =0 ; i < (myAD.ADinst.scan_cnt)/2 ; i++ )    // print voltages and temperature
+  {
+    Serial.print(adc_channel[i], DEC);   
+    Serial.print("\t");
+  }
+  for( ; i < myAD.ADinst.scan_cnt ; i++ )   // print voltages and temperature
+  {
+    Serial.print(ntc1.getTemperature(adc_channel[i]), DEC);
+    Serial.print("\t");
+  }
+
+  Serial.print(board_temp, DEC);       //print board temperature
+  Serial.print("\t");
+
+  
+  //current_voltage= (current_voltage*5.000/1024.000);//-2.5)/0.185;
+  Serial.print(cell_current,BIN);
+
+   
+  Serial.print("\n");
+
+
+}
