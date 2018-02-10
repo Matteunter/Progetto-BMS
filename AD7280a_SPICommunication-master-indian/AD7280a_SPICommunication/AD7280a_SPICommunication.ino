@@ -319,12 +319,14 @@ do
 	}
  if( a == 'k')  // cell balance
  {
-   uint8_t cell_num, cell_time;
+   uint8_t cell_time;
+   byte cell_num;
 	 
-   Serial.println("Insert cell number (from 1 to 6)");
-   cell_num = Serial.read();
+   //Serial.println("Insert 1 for each cell to balance");
+   cell_num = 0b111000;       //provo a caso le prime 3 celle
+   Serial.println(cell_num,BIN);
    Serial.println("Insert time in seconds");
-   cell_time = Serial.read();
+   cell_time = 120;
 	 
    Serial.println("inizio");
    ad7280_cell_balance_enable (&ADinst, cell_num, cell_time); //per ora attiva cella 2 per 71.5sec
