@@ -1,123 +1,66 @@
 
 
+#include "psu.h"
+#include <Arduino.h>
+
+
+
+
 
 //////////////////////////////////////////////////////////////////////////////
-//	PUBLIC MEMBERS
+//  CONSTRUCTOR MEMBER
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef PSU_STRINGS
-#define SAVE_CMD	"SAVE"
-#define LOAD_CMD	"LOAD"
-#define ENABLE_CMD	"OUTPUT 1"
-#define DISABLE_CMD	"OUTPUT 0"
-#define STATUS_CMD	"STATUS"
-#define 
-#define
-#define
-#define
-#define
-#define
-#define
-#define
-
-
-
-
-
-
-
-#endif
-
-
-
-#include "PSU.h"
-
-
-bool PSU::init(initial_current){
-	char answer[];
-	Serial.begin(38400);
-	Serial.print("CURRENT ");
-	Serial.println(initial_current, DEC);
-	Serial.println("SAVE");
-	Serial.println("OUTPUT 1");
-	answer = Serial.read();
-
-	if (strcmp(answer, "  ")!=1) 
-		return false;
-
-
-	return true;
+PSU::PSU() {
 }
 
 
-bool getState(){
-	char answer[50];
-	answer = Serial.read()
-	
+//////////////////////////////////////////////////////////////////////////////
+//	PUBLIC FUNCTIONS
+//////////////////////////////////////////////////////////////////////////////
+
+bool PSU::setCurrent (float curr_max) {
+  Serial.begin(38400);
+  curr_state.current_lim = curr_max;
+  Serial.print("CURRENT ");
+  Serial.print(curr_max,3);
+  Serial.print("\n");
 
 
 
+    }
+bool PSU::setVoltage (float volt_max){
+  Serial.begin(38400);
+  curr_state.voltage_lim = volt_max;
+  Serial.print("VOLTAGE ");
+  Serial.print(volt_max,2);
+  Serial.print("\n");
+}
 
 
 
+void PSU::startCharging () {
+  Serial.begin(38400);
+  Serial.print("OUTPUT 1");
+  Serial.print("\n");
+  curr_state.output = 1;
+
+}
 
 
+void PSU::stopCharging (){
+  Serial.begin(38400);
+  Serial.print("OUTPUT 0");
+  Serial.print("\n");
+  curr_state.output = 0;
+}
 
-
-
-		}
-
-
-
-	}
-	
-
-
-
-
-
+bool PSU::isCharging (){
+  if (curr_state.output ==1) return 1;
+  else return 0;
 }
 
 
 
 
 
-
-
-
-
-
-
-
-
-bool setCurrent () {
-
-
-
-
-
-}
-
-
-
-
-
-
-bool setVoltage () {
-
-
-
-
-
-
-}
-
-
-
-
-
-
-
-bool stopCharging () {
-
-}

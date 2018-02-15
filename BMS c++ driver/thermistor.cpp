@@ -185,4 +185,3 @@ int16_t THERMISTOR::getTemperature(uint16_t ADC_temp_sample){				//aggiornarlo p
 	return  temp;
 };
 
-

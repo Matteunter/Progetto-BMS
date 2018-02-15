@@ -3,21 +3,37 @@
 #include <Arduino.h>
 #include "AD7280.h"
 #include "thermistor.h"
+#include "current_sensor.h"
+#include "psu.h"
 
 
 
 
 #ifndef _SS
 #define _SS 10
-#endif
+#endif 
 
 #define _EN_PIN	5
+#define C_LIM  0.5
+#define V_LIM  13
+#define V_TH  4
+
+
+#define T_TH  50 
+#define ONBOARD_NTC_PIN A4 
+#define BT_TH 60
+
+
 
 
 long int startup_time;
 AD7280 myAD;                  //1 AD class allocation
-THERMISTOR res1;              // 1 onboard resistor class allocation
-THERMISTOR ntc[6];            // 6 cell resistor class allocation
+PSU    myPSU;
+THERMISTOR res;              // 1 onboard resistor class allocation
+THERMISTOR ntc;            // 6 cell resistor class allocation
+//CURRENT_SENSOR cell_curr; 
+
+int board_temp;     //temperatura della board
 
 
 byte a;
@@ -28,91 +44,133 @@ byte a;
 
 void setup() {
   digitalWrite(_EN_PIN, HIGH);
-  Serial.begin(9600);
-  
+  Serial.begin(38400);
   myAD.init(_SS);        //initialize slave AD on pin 10
-  
-  res1.init(ONBOARD_NTC);     //initialize resistor as onboard ntc
-
-
-  ntc[0].init(CELL_NTC);      //initialize resistors ad cell ntc
-  ntc[1].init(CELL_NTC);
-  ntc[2].init(CELL_NTC);
-  ntc[3].init(CELL_NTC);
-  ntc[4].init(CELL_NTC);
-  ntc[5].init(CELL_NTC);
-
-
- 
-  
-  
-  
-  //uint16_t chann[12];
-           
-
-
-
-
-  
-  
+  res.init(ONBOARD_NTC);     //initialize resistor as onboard ntc
+  ntc.init(CELL_NTC);      //initialize resistors ad cell ntc
+  //cell_curr.init(ACS712);   //setup Hall Effect Sensor
 }
 
+
+
+
+
+
+
+
+
 void loop() {
-  // put your main code here, to run repeatedly:
 
-   uint16_t cell_voltage[myAD.ADinst.scan_cnt];  //initialize 1 voltage for each cell
-   
-    a= Serial.read();
-  if (a == 'a') {
-    uint32_t provascrittura;
-    myAD.writereg(AD7280A_DEVADDR_MASTER, AD7280A_CB1_TIMER, 1, 0x11);
-    myAD.read32(&provascrittura);
-    Serial.println(provascrittura, HEX);
-    
-    Serial.println("prova1");
-    
-    
+  int sum;
+  int k=0;
+  int i=0;
+  uint16_t adc_channel[myAD.ADinst.scan_cnt];
+  uint16_t cell_temperatures[myAD.ADinst.scan_cnt];
+  uint16_t cell_voltages[myAD.ADinst.scan_cnt];
+  byte balance_reg = 0b00000000;  
+  myAD.balance_all(balance_reg, 0);
+  byte prev_balance_reg;
+
+  byte full_balance_reg = 0b00000000;
+
+
+  for (i = 0; i<myAD.ADinst.scan_cnt; i++ ){
+    full_balance_reg = full_balance_reg | (1<<i);
+  }
+
+
+  do {
+  //reading cell Values
   
-    myAD.read_all( myAD.ADinst.scan_cnt, &cell_voltage[0]);
+  sum = myAD.read_all( myAD.ADinst.scan_cnt, &adc_channel[0]);
 
-    Serial.println("prova2");
+  //separate channels between voltages and temperatures
 
-    int i;
-    for(i =0 ; i < 12 ; i++ )
-    {
-        if( ((i/6)%2) == 0 )
-        //if(1)
-        {
-        Serial.print("VIN_");
-        Serial.print( (1+i),DEC );
-        Serial.print(": ");
-        Serial.println(cell_voltage[i],DEC);
-        }
-        else
-        {
-        Serial.print("AUX_");
-        Serial.print( (1+i),DEC );
-        Serial.print(": ");
-        Serial.println(cell_voltage[i],DEC);
-        }
-     }
-   i=0;
 
-   
-   uint16_t temp1 = res1.getTemperature(analogRead(A4));   //pin onboard ntc
-   Serial.print("temperatura on-board NTC:");
-   Serial.println(temp1, DEC);
+  for (i=0;i<myAD.ADinst.scan_cnt/2; i++){
+    cell_voltages[i]=(adc_channel[i]*0.976)+1000;   //
+  }
 
-   
+  for (i=myAD.ADinst.scan_cnt/2+1;i<myAD.ADinst.scan_cnt; i++){
+    cell_temperatures[i]=ntc.getTemperature(adc_channel[i]);
+  }
+  
+  //getting board temperature from analog pin
 
-   myAD.cell_balance_enable(1, 120);
-   Serial.println("test balancing, cell_bal_register:");
-   int trybal = myAD.readreg(AD7280A_DEVADDR_MASTER, 0x17);
-   Serial.println(trybal, BIN);
+  board_temp= res.getTemperature(analogRead(ONBOARD_NTC_PIN));   
+  
+  k++;    //
 
-    
+  if (k == myAD.ADinst.scan_cnt/2) k = 0;
+
+  //wait the end of discharge or overheating
+
+  } while ((sum > (myAD.ADinst.scan_cnt/2 * V_TH))||(cell_temperatures[k]> T_TH));
+  
+
+
+    // qui possiamo inserire un print di tutto via seriale per pc
+
+  //start Charging
+  myPSU.setCurrent(C_LIM);
+  myPSU.setVoltage(V_LIM);
+  myPSU.startCharging();
+
+
+  //CYCLE DURING CHARGING
+
+
+
+  while (myPSU.isCharging() == 1 ){       
+    //misuro tensione e temperature
+
+    // se tensioni troppo alte:
+    // genero stringa con 1 per le celle sovraccariche
+    //attivo bilanciamento con la stringa
+
+    //ciclo per controllore che tutte le celle siano bilanciate
+
+    myAD.read_all( myAD.ADinst.scan_cnt, &adc_channel[0]);
+
+    //separate channels between voltages and temperatures
+
+    for (i=0;i<myAD.ADinst.scan_cnt/2; i++){
+      cell_voltages[i]=(adc_channel[i]*0.976)+1000;   //
+    }
+
+    for (i=myAD.ADinst.scan_cnt/2+1;i<myAD.ADinst.scan_cnt; i++){
+      cell_temperatures[i]=ntc.getTemperature(adc_channel[i]);
+    }
+  
+    //getting board temperature from analog pin
+
+    board_temp= res.getTemperature(analogRead(ONBOARD_NTC_PIN));  
+
+    // balancing control
+    prev_balance_reg = balance_reg;
+    for( i=0 ; i < myAD.ADinst.scan_cnt/2; i++){
+      if (cell_voltages[i] > V_TH){
+        balance_reg = balance_reg | (1 << i);
+      }
+    }
+
+    if ((board_temp < BT_TH)&&(balance_reg != prev_balance_reg)){  //if balance_reg changed and board_temp OK
+      myAD.balance_all(balance_reg, 0);     //eternal balancing
+    }
+    else myPSU.stopCharging();
+
+
+    for( i=0 ; i < myAD.ADinst.scan_cnt/2; i++){
+      if (cell_temperatures[i] > T_TH){
+        myPSU.stopCharging();
+      }
+    }
+    //se tutte tensione sopra la soglia allora stopCharging
+
+    if (balance_reg == full_balance_reg ){
+      myPSU.stopCharging();
+    }
+
   }
 
 }
-
-

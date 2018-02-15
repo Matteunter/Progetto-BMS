@@ -1,20 +1,22 @@
 
-#ifndef PSU.h
-#define PSU.h
+#ifndef PSU_h
+#define PSU_h
 
 
 
 #include <string.h>
+#include <stdio.h>
+
 
 
 struct state{
-	int current;
-	int voltage;
-	int vin;
+	float current_lim;
+	float voltage_lim;
+	//float  vin;
     bool output;
-    bool cc;
-    bool cv;
-}
+    //bool cc;
+    //bool cv;
+};
 
 
 
@@ -23,20 +25,13 @@ class PSU {
 	public:
 		PSU();
 
-		bool init(uint8_t initial_current);
-		bool getState();
-		
-		bool setCurrent ();
-		bool setVoltage ();
-		bool stopCharging ();
+		//bool getState();
 
-
-		
-
-
-
-
-
+		bool setCurrent (float curr_max);
+		bool setVoltage (float volt_max);
+    	void startCharging ();
+		void stopCharging ();
+   		bool isCharging ();
 
 
 
@@ -48,4 +43,4 @@ class PSU {
 
 };
 
-#endif //psu.h
+#endif

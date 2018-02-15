@@ -269,8 +269,7 @@ uint32_t AD7280::read_all(uint32_t cnt, uint16_t *array)			/*Write to all the Co
 		if (check_crc(tmp))
 			return 0xFFF;
 
-			if (i < cnt/2) array[i] = ((tmp >> 11) & 0xFFF)+1000; //OFFSETTTTTTTTTT da aggiungere perché l'adc è nabbo;
-      else array[i] = ((tmp >> 11) & 0xFFF);                //ygefesfsdckhsd
+			array[i] = ((tmp >> 11) & 0xFFF);
 		/* only sum cell voltages */
 		if (((tmp >> 23) & 0xF) <= AD7280A_CELL_VOLTAGE_6)
 		{
@@ -308,7 +307,7 @@ void AD7280::cell_balance_enable(uint8_t cell_num, uint8_t timer_sec){
 
 void AD7280::balance_all(byte cell_num, uint8_t timer_sec)
 {
-	if ((timer_sec<71)&&(timer_sec>1)) timer_sec=71;			//minimum 71.5 seconds
+    if ((timer_sec<71)&&(timer_sec>1)) timer_sec=71;			//minimum 71.5 seconds
 	timer_sec = ((timer_sec / 71) << 3);		// timer in sec converted in 5 bit binary, 000 LSBs reserved
 
 
@@ -394,4 +393,3 @@ bool AD7280::init(int ss)
 
 
 }
-
