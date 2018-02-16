@@ -5,9 +5,10 @@
 //
 
 #include <SPI.h>
+#include <Arduino.h>
 #include "ADserial.h"
 #include "AD7280.h"
-#include <Arduino.h>
+
 
 
 

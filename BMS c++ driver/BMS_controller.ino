@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <Arduino.h>
 #include "AD7280.h"
+#include "ADserial.h"
 #include "thermistor.h"
 #include "current_sensor.h"
 #include "psu.h"
@@ -113,8 +114,11 @@ void loop() {
 
   //start Charging
   myPSU.setCurrent(C_LIM);
+  delay(1000);
   myPSU.setVoltage(V_LIM);
+  delay(1000);
   myPSU.startCharging();
+  delay(1000);
 
 
   //CYCLE DURING CHARGING
