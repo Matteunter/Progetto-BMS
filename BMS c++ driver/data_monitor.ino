@@ -34,7 +34,7 @@ byte a;
 int cell_current;
 long int curr_time;
 int16_t board_temp;
-byte current_voltage;
+
 
 uint16_t adc_channel[CHANNELS];
 uint16_t cell_temperatures[CHANNELS];
@@ -43,9 +43,11 @@ int battery_voltage_mv=0;
 
 
 char received[50];
-char command[25];
+char command[25];   //COMMAND LABEL
 char value[25];
 int value_int;
+byte value_bin;
+int balance_reg;
 
 
 
@@ -69,38 +71,33 @@ void loop() {
 
         //Serial.print(Serial.available());
         if (Serial.available() > 0){
-
-                int i = 0;
+                int i;
+                //GET WHOLE COMMAND STRING FROM SERIAL
                 a = Serial.read();
-                while (a != '\n') {
+                for (int i =0; a != '\n'; i++) {
                         received[i]= a;
                         a = Serial.read();
                         i++;
                 }
-
-                received[i] = '\n';
-
-
+                received[i] = '\n';     //terminate received command
 
                 i = 0;
 
-                while (received[i] != SEPARATOR){
+                //SEPARATE COMMAND LABEL FROM VALUE
+                for (;received[i] != SEPARATOR; i++){
                         command[i] = received[i];
-                        i++;
                 }
 
-                command[i] = '\0';
+                command[i] = '\0';      //terminate label string
 
 
                 int k =0;
                 i++;
-                while (received[i] != '\n') {
+                for (k=0; received[i] != '\n'; k++) {
                         value[k] = received[i];
                         i++;
-                        k++;
-
                 }
-                value[k]= '\0';
+                value[k]= '\0';         //terminate value string
 
 
                 // Serial.print(command);
@@ -110,31 +107,29 @@ void loop() {
 
                 // Serial.print('\n');
 
-                sscanf(value, "%d", &value_int);
+                sscanf(value, "%d", &value_int);        //convert value string to integer
                 Serial.print(value_int, DEC);
 
 
-                myAD.read_all( CHANNELS, &adc_channel[0]);
-                board_temp= res.getTemperature(analogRead(A4));
+                myAD.read_all( CHANNELS, &adc_channel[0]);          //read all channels
                 curr_time = millis()- startup_time;
 
-
+                //separate voltages from temperatures
                 for (i=0;i<CHANNELS/2; i++){
                 cell_voltages[i]=(adc_channel[i]*0.976)+1000;
-                battery_voltage_mv = battery_voltage_mv + cell_voltages[i] ;
+                battery_voltage_mv = battery_voltage_mv + cell_voltages[i] ;    //calc total voltage across the battery
                 }
 
                 for (i=CHANNELS/2+1;i<CHANNELS; i++){
-                cell_temperatures[i]=ntc.getTemperature(adc_channel[i]);
+                cell_temperatures[i]=ntc.getTemperature(adc_channel[i]);        //convert cell temperature to degrees
                 }
 
-                board_temp= res.getTemperature(analogRead(_ONBOARD_NTC_PIN));
+                board_temp= res.getTemperature(analogRead(_ONBOARD_NTC_PIN));       //board temperature acquisition and convertion
 
 
-
+                // TO PRINT VOLTAGES
 
                 if (strcmp(command, "mVCELL") == 0) {
-
                         if ((value_int <= CELLS)&&(value_int > 0)) {
                                 if (strcmp(value, "A")==0){
                                         for (i=0; i< CHANNELS/2; i++ ) {
@@ -149,27 +144,63 @@ void loop() {
                         else    Serial.print("ERROR");
                 }
 
-                else if (strcmp(command, "TCELL") == 0) {
-                        for (i=0; i< CHANNELS/2; i++ ) {
-                                Serial.print(cell_temperatures[i]);
-                                Serial.print(SEPARATOR);
+                //TO PRINT TEMPERATURES
 
+                else if (strcmp(command, "TCELL") == 0) {
+                        if ((value_int <= CELLS)&&(value_int > 0)) {
+                                if (strcmp(value, "A")==0){
+                                        for (i=0; i< CHANNELS/2; i++ ) {
+                                                Serial.print(cell_temperatures[i]);
+                                                Serial.print(SEPARATOR);
+                                        }
+                                }
+
+                                else    Serial.print(cell_temperatures[value_int]);
+                                Serial.print('\n');
                         }
-                        Serial.print('\n');
+                        else    Serial.print("ERROR");
+                }
+
+
+                //TO PRINT BALANCING MOSFET STATUS
 
                 }
                 else if (strcmp(command, "RBCELL") == 0) {
+                        balance_reg = myAD.readreg(0, 0x14);            //read from balance register
+                        Serial.print(balance_reg, BIN);
+
 
                 }
+
+
+
+
+
+
+                //TO ENABLE BALANCING FROM CELL BITMASK
+
+
                 else if (strcmp(command, "SBCELL ") == 0) {
+                        value_bin= 0x00;
+                        for (int i=0; value[i]!=NULL; i++){
+                                if (value[i]= '1') {
+                                        value_bin = value_bin | (1 << i);
+                                }
+                                else {
+                                        if (value[i] == '0') value_bin = value_bin & (0 << i);
+                                        else Serial.println("WRONG CELL BALANCING BITMASK");
+                                }
+                        }
+                        myAD.balance_all(value_bin, 0 );
 
                 }
 
+                else Serial.print("UNKNOWN COMMAND");
 
-        }
 
 
-        delay(2000);
+
+        delay(1000);
 
 
 
