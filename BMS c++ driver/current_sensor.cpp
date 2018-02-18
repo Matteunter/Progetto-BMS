@@ -28,7 +28,7 @@ bool CURRENT_SENSOR::init(currentsensorType_t currentsensorType_l){
     sensor_type = currentsensorType_l;
 		if(currentsensorType_l == LEM_HAIS_50_P){
 			scale_factor = Vresolution_mV * I_PN / G_TH;
-      
+
 			return true;
 		}
 		else if(currentsensorType_l == INA170_CSA){
@@ -53,7 +53,7 @@ float CURRENT_SENSOR::getCurrent(){
 	curr_sensor_ref = analogRead(CURR_S_REF_PIN);
 	
 
-	if (sensor_type == ACS712) 
+	if (sensor_type == ACS712)
 	return (((float)curr_sensor_out )* scale_factor);
 	else
 	return (((float)curr_sensor_out - (float)curr_sensor_ref) * scale_factor);

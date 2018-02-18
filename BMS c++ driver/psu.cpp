@@ -1,4 +1,12 @@
-
+//////////////////////////////////////////////////////////////7
+//DC-DC DIGITAL CONVERTER CONTROL CLASS
+//MODEL: B3603
+//https://www.elecrow.com/download/B3603%20User%20Manual.pdf
+//
+//This converter uses UART protocol to communicate with any other device
+// Here are the main functions to control the behaviour of the converter.
+//
+//////////////////////////////////////////////////////////////
 
 #include "psu.h"
 #include <Arduino.h>
@@ -59,8 +67,3 @@ bool PSU::isCharging (){
   if (curr_state.output ==1) return 1;
   else return 0;
 }
-
-
-
-
-

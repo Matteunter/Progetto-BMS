@@ -1,4 +1,12 @@
-
+//////////////////////////////////////////////////////////////7
+//DC-DC DIGITAL CONVERTER CONTROL CLASS
+//MODEL: B3603
+//https://www.elecrow.com/download/B3603%20User%20Manual.pdf
+//
+//This converter uses UART protocol to communicate with any other device
+// Here are the main functions to control the behaviour of the converter.
+//
+//////////////////////////////////////////////////////////////
 #ifndef PSU_h
 #define PSU_h
 
@@ -39,7 +47,7 @@ class PSU {
 	private:
 
 		state curr_state;
-		
+
 
 };
 

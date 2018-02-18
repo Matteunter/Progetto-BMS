@@ -114,18 +114,6 @@ int8_t AD7280::chain_setup()				// Daisy chain setup returns the number of devic
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 //	CONSTRUCTOR MEMBER
 
 AD7280::AD7280(){
