@@ -4,27 +4,31 @@
 #include "AD7280.h"
 #include "thermistor.h"
 #include "current_sensor.h"
-
+#include <stdio.h>
 
 
 
 #ifndef _SS
 #define _SS 10
+
 #endif
 
 #define _EN_PIN	5
-#define _BOARD_TEMP_PIN A4
+#define _ONBOARD_NTC_PIN A4
 #define _CURRENT_OUT_PIN A0
 #define _CURRENT_REF_PIN A1
 
+#define CELLS 6
+#define CHANNELS 12
+#define SEPARATOR ' '
 
 long int startup_time;
 AD7280 myAD;                  //1 AD class allocation
-THERMISTOR res1;              // 1 onboard resistor class allocation
-THERMISTOR ntc1;            // 6 cell resistor class allocation
+THERMISTOR res;              // 1 onboard resistor class allocation
+THERMISTOR ntc;            // 6 cell resistor class allocation
 CURRENT_SENSOR curr_val;
 
-int CELL_NUMBER = 6;
+
 byte a;
 
 int cell_current;
@@ -32,119 +36,141 @@ long int curr_time;
 int16_t board_temp;
 byte current_voltage;
 
+uint16_t adc_channel[CHANNELS];
+uint16_t cell_temperatures[CHANNELS];
+uint16_t cell_voltages[CHANNELS];
+int battery_voltage_mv=0;
+
+
+char received[50];
+char command[25];
+char value[25];
+int value_int;
+
+
+
+
 
 void setup() {
-  digitalWrite(_EN_PIN, HIGH);
- 
-  
-  myAD.init(_SS);        //initialize slave AD on pin 10
-  
-  res1.init(ONBOARD_NTC);     //initialize resistor as onboard ntc
+        digitalWrite(_EN_PIN, HIGH);
+        myAD.init(_SS);        //initialize slave AD on pin 10
 
+        startup_time = millis();
+        return;
+        Serial.begin(9600);
 
-  ntc1.init(CELL_NTC);      //initialize resistor as cell ntc
-  
-  //curr_val.init(ACS712);
-
-  int i = 0;    
-  Serial.print("Time\t");
-
-  
-  for(i =0 ; i < myAD.ADinst.scan_cnt ; i++ )
-    {
-      if ((i/(CELL_NUMBER) %2) == 0 )
-      {
-      Serial.print("V");
-      Serial.print( (1+i),DEC );
-      Serial.print("\t");
-      }
-      else
-      {
-      Serial.print("T");
-      Serial.print( (1+i-6),DEC );
-      Serial.print("\t");
-      }
-    }
-  i=0;
-
-  Serial.print("BOARD_TEMP\t");
-  Serial.print("CURRENT\t");
-  Serial.print("CHARGING STATE\t");
-  Serial.print("\n");	
-  startup_time = millis();
-
-
-
-  
-  return;
+        res.init(ONBOARD_NTC);     //initialize resistor as onboard ntc
+        ntc.init(CELL_NTC);      //initialize resistor as cell ntc
 }
+
 
 void loop() {
-  uint16_t adc_channel[myAD.ADinst.scan_cnt];
-  myAD.read_all( myAD.ADinst.scan_cnt, &adc_channel[0]);
-  board_temp= res1.getTemperature(analogRead(A4));
-  curr_time = millis()- startup_time;
-  
-   
-  print_all (adc_channel, curr_time, cell_current, board_temp);
-  cell_current = analogRead(A1);
-  
-
-  
-
-  return;
-
-  
 
 
+        //Serial.print(Serial.available());
+        if (Serial.available() > 0){
 
-  
-  
-  
-  
+                int i = 0;
+                a = Serial.read();
+                while (a != '\n') {
+                        received[i]= a;
+                        a = Serial.read();
+                        i++;
+                }
+
+                received[i] = '\n';
+
+
+
+                i = 0;
+
+                while (received[i] != SEPARATOR){
+                        command[i] = received[i];
+                        i++;
+                }
+
+                command[i] = '\0';
+
+
+                int k =0;
+                i++;
+                while (received[i] != '\n') {
+                        value[k] = received[i];
+                        i++;
+                        k++;
+
+                }
+                value[k]= '\0';
+
+
+                // Serial.print(command);
+                // Serial.print('\t');
+                // Serial.print(SEPARATOR);
+                // Serial.print('\t');
+
+                // Serial.print('\n');
+
+                sscanf(value, "%d", &value_int);
+                Serial.print(value_int, DEC);
+
+
+                myAD.read_all( CHANNELS, &adc_channel[0]);
+                board_temp= res.getTemperature(analogRead(A4));
+                curr_time = millis()- startup_time;
+
+
+                for (i=0;i<CHANNELS/2; i++){
+                cell_voltages[i]=(adc_channel[i]*0.976)+1000;
+                battery_voltage_mv = battery_voltage_mv + cell_voltages[i] ;
+                }
+
+                for (i=CHANNELS/2+1;i<CHANNELS; i++){
+                cell_temperatures[i]=ntc.getTemperature(adc_channel[i]);
+                }
+
+                board_temp= res.getTemperature(analogRead(_ONBOARD_NTC_PIN));
+
+
+
+
+                if (strcmp(command, "mVCELL") == 0) {
+
+                        if ((value_int <= CELLS)&&(value_int > 0)) {
+                                if (strcmp(value, "A")==0){
+                                        for (i=0; i< CHANNELS/2; i++ ) {
+                                                Serial.print(cell_voltages[i]);
+                                                Serial.print(SEPARATOR);
+                                        }
+                                }
+
+                                else    Serial.print(cell_voltages[value_int]);
+                                Serial.print('\n');
+                        }
+                        else    Serial.print("ERROR");
+                }
+
+                else if (strcmp(command, "TCELL") == 0) {
+                        for (i=0; i< CHANNELS/2; i++ ) {
+                                Serial.print(cell_temperatures[i]);
+                                Serial.print(SEPARATOR);
+
+                        }
+                        Serial.print('\n');
+
+                }
+                else if (strcmp(command, "RBCELL") == 0) {
+
+                }
+                else if (strcmp(command, "SBCELL ") == 0) {
+
+                }
+
+
+        }
+
+
+        delay(2000);
+
+
+
   }
-
-
-
-
-
-
-void print_all (int16_t * adc_channel, int curr_time, int cell_current, int board_temp) {
-
-  int i;
- 
-   
-   //calcolo temperatura degli ntc e rimetto dentro adc-channel
-   
-
-  board_temp= res1.getTemperature(analogRead(A4));   //pin onboard ntc
-   
-   
-
-  Serial.print(curr_time, DEC);
-  Serial.print("\t");
-
-
-  for(i =0 ; i < (myAD.ADinst.scan_cnt)/2 ; i++ )    // print voltages and temperature
-  {
-    Serial.print(adc_channel[i], DEC);   
-    Serial.print("\t");
-  }
-  for( ; i < myAD.ADinst.scan_cnt ; i++ )   // print voltages and temperature
-  {
-    Serial.print(ntc1.getTemperature(adc_channel[i]), DEC);
-    Serial.print("\t");
-  }
-
-  Serial.print(board_temp, DEC);       //print board temperature
-  Serial.print("\t");
-
-  
-  //current_voltage= (current_voltage*5.000/1024.000);//-2.5)/0.185;
-  Serial.print(cell_current,BIN);
-
-   
-  Serial.print("\n");
-
-
-}
