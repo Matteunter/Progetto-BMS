@@ -176,7 +176,6 @@ void loop() {
 
 
                 else if (strcmp(command, "RBCELL") == 0) {
-                        Serial.print("PROVA1");
                         balance_reg = myAD.readreg(0, 0x14);            //read from balance register
                         Serial.print(balance_reg, BIN);
 
