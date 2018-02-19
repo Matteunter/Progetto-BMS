@@ -1,3 +1,15 @@
+/*****************************************************
+
+File: BMS_controller.ino
+Authors: F.Garbuglia, M.Unterhorst
+Created: Feb 2018
+
+Description:
+Brief algorithm for Arduino to manage battery charging
+using BMSino
+
+*****************************************************/
+
 #include <SPI.h>
 #include <stdint.h>
 #include <Arduino.h>
@@ -12,7 +24,7 @@
 
 #ifndef _SS
 #define _SS 10
-#endif 
+#endif
 
 #define _EN_PIN	5
 #define C_LIM  0.5
@@ -20,8 +32,8 @@
 #define V_TH  4
 
 
-#define T_TH  50 
-#define ONBOARD_NTC_PIN A4 
+#define T_TH  50
+#define ONBOARD_NTC_PIN A4
 #define BT_TH 60
 
 
@@ -32,7 +44,7 @@ AD7280 myAD;                  //1 AD class allocation
 PSU    myPSU;
 THERMISTOR res;              // 1 onboard resistor class allocation
 THERMISTOR ntc;            // 6 cell resistor class allocation
-//CURRENT_SENSOR cell_curr; 
+//CURRENT_SENSOR cell_curr;
 
 int board_temp;     //temperatura della board
 
@@ -68,7 +80,7 @@ void loop() {
   uint16_t adc_channel[myAD.ADinst.scan_cnt];
   uint16_t cell_temperatures[myAD.ADinst.scan_cnt];
   uint16_t cell_voltages[myAD.ADinst.scan_cnt];
-  byte balance_reg = 0b00000000;  
+  byte balance_reg = 0b00000000;
   myAD.balance_all(balance_reg, 0);
   byte prev_balance_reg;
 
@@ -82,7 +94,7 @@ void loop() {
 
   do {
   //reading cell Values
-  
+
   sum = myAD.read_all( myAD.ADinst.scan_cnt, &adc_channel[0]);
 
   //separate channels between voltages and temperatures
@@ -95,11 +107,11 @@ void loop() {
   for (i=myAD.ADinst.scan_cnt/2+1;i<myAD.ADinst.scan_cnt; i++){
     cell_temperatures[i]=ntc.getTemperature(adc_channel[i]);
   }
-  
+
   //getting board temperature from analog pin
 
-  board_temp= res.getTemperature(analogRead(ONBOARD_NTC_PIN));   
-  
+  board_temp= res.getTemperature(analogRead(ONBOARD_NTC_PIN));
+
   k++;    //
 
   if (k == myAD.ADinst.scan_cnt/2) k = 0;
@@ -107,7 +119,7 @@ void loop() {
   //wait the end of discharge or overheating
 
   } while ((sum > (myAD.ADinst.scan_cnt/2 * V_TH))||(cell_temperatures[k]> T_TH));
-  
+
 
 
     // qui possiamo inserire un print di tutto via seriale per pc
@@ -125,7 +137,7 @@ void loop() {
 
 
 
-  while (myPSU.isCharging() == 1 ){       
+  while (myPSU.isCharging() == 1 ){
     //misuro tensione e temperature
 
     // se tensioni troppo alte:
@@ -145,10 +157,10 @@ void loop() {
     for (i=myAD.ADinst.scan_cnt/2+1;i<myAD.ADinst.scan_cnt; i++){
       cell_temperatures[i]=ntc.getTemperature(adc_channel[i]);
     }
-  
+
     //getting board temperature from analog pin
 
-    board_temp= res.getTemperature(analogRead(ONBOARD_NTC_PIN));  
+    board_temp= res.getTemperature(analogRead(ONBOARD_NTC_PIN));
 
     // balancing control
     prev_balance_reg = balance_reg;

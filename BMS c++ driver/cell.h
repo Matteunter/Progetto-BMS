@@ -4,7 +4,4 @@
 
 // state of charge
 
-
 // CAN BUS ??
-
-//prova tutorial di matteo

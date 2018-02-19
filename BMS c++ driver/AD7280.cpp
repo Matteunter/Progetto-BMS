@@ -1,8 +1,11 @@
-//
-//		AD7280.cpp
-//
-//
-//
+/*****************************************************
+
+File: AD7280.cpp
+Authors: F.Garbuglia, M.Unterhorst
+Created: Feb 2018
+Credits:
+
+*****************************************************/
 
 #include <SPI.h>
 #include <Arduino.h>

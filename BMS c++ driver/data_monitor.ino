@@ -1,3 +1,21 @@
+/***************************************************************
+File: data_monitor.ino
+Authors: F.Garbuglia, M.Unterhorst
+Created: Feb 2018
+
+Description:
+Controls BMSino through external commands,
+using Arduino's serial port
+
+External Commands list:
+- mVCELL A  gives the cell's voltage (A stands for All)
+- TCELL A   gives the cell's temperature in °C (A stands for All)
+- RBCELL A  returns the balancing status (1 stands for balance active
+            0 for not active)
+- SBCELL x  sets the balancing register (x is the 6-bit bitmask,
+            i.e. 000101 for first and third cell balance)
+***************************************************************/
+
 #include <SPI.h>
 #include <stdint.h>
 #include <Arduino.h>

@@ -1,3 +1,10 @@
+/*****************************************************
+
+File: AD7280.cpp
+Authors: F.Garbuglia, M.Unterhorst
+Created: Feb 2018
+
+*****************************************************/
 
 #ifndef ADSERIAL_H
 #define ADSERIAL_H

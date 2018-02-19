@@ -1,11 +1,11 @@
+/*****************************************************
 
-//
-//		AD7280.h
-//
-//
-//
+File: AD7280.h
+Authors: F.Garbuglia, M.Unterhorst
+Created: Feb 2018
+Credits:
 
-
+*****************************************************/
 
 // Class to decode AD7280 information using spi functions
 
@@ -155,11 +155,11 @@ class AD7280 {
 		ad7280_state ADinst;						// current Ad state structure
 
 		AD7280();			//constructor member
-		
+
 		bool init(int ss);			//initial setup
-		
+
 		int8_t writereg(uint32_t devaddr, uint32_t addr, uint8_t all, uint32_t val);		// to write an Ad's register
-		
+
     	int8_t read32(uint32_t *val);								// to read an Ad's response to a previous operation
 
     	int8_t readreg(uint32_t devaddr, uint32_t addr);					// to read an Ad's register
@@ -175,10 +175,10 @@ class AD7280 {
 
 
 	private:
-		
-		
-		
-	 	void build_crc(uint8_t *crc_tab);				// to build crc table	
+
+
+
+	 	void build_crc(uint8_t *crc_tab);				// to build crc table
 
 		uint8_t calc_crc(uint8_t *crc_tab, uint32_t val);		// to calculate the crc of a command
 
@@ -186,24 +186,14 @@ class AD7280 {
 
 		int8_t chain_setup();						// to enable Daisy Chain
 
-		
+
 		void wait();
 
-   		
-		
-		
-		
- 		
+
+
+
+
+
 
 
 };
-
-
-
-
-
-
-
-
-
-

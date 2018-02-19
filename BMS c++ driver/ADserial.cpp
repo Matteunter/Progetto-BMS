@@ -1,9 +1,18 @@
+/*****************************************************
+
+File: ADserial.cpp
+Authors: F.Garbuglia, M.Unterhorst
+Created: Feb 2018
+Credits:
+
+*****************************************************/
+
 #include"ADserial.h"
 #include <SPI.h>
 
 #ifndef _SS
 #define _SS 10              //set slave-select pin
-#endif              
+#endif
 
 
 #define _PDEBUG             //comment to show bits at every transaction
@@ -49,7 +58,7 @@ void transferspi32( uint32_t *val, int slaveselect)
   Serial.print(",");
   Serial.println(l_l,BIN);
 #endif
-  
+
   digitalWrite(slaveselect,LOW);
   h_h = SPI.transfer( ((*val)>>24) & 0xFF );  // D31-D24
   h_l = SPI.transfer( ((*val)>>16) & 0xFF );  // D23-D16
@@ -58,9 +67,9 @@ void transferspi32( uint32_t *val, int slaveselect)
   delay(100);
   digitalWrite(slaveselect,HIGH);
   *val = (uint32_t) (((uint32_t) h_h <<24) | ((uint32_t) h_l <<16) | ((uint32_t) l_h << 8) | l_l);
-  
+
  #ifndef _PDEBUG
-  
+
   Serial.println("Receiving SPI32bit");
   Serial.print("HEX: ");
   Serial.print(h_h,HEX);

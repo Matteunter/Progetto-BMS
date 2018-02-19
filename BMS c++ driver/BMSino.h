@@ -1,3 +1,10 @@
+/*****************************************************
+
+File: BMSino.h
+Authors: F.Garbuglia, M.Unterhorst
+Created: Feb 2018
+
+*****************************************************/
 #ifndef BMSINO_H
 #define BMSINO_H
 
