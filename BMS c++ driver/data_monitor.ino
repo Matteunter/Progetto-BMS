@@ -60,7 +60,6 @@ void setup() {
 
 
         startup_time = millis();
-        return;
         Serial.begin(9600);
 
         res.init(ONBOARD_NTC);     //initialize resistor as onboard ntc
@@ -69,7 +68,6 @@ void setup() {
 
 
 void loop() {
-
 
         //Serial.print(Serial.available());
         if (Serial.available() > 0){
@@ -130,10 +128,9 @@ void loop() {
                 battery_voltage_mv = battery_voltage_mv + cell_voltages[i] ;    //calc total voltage across the battery
                 }
                 k = 0;
-                int temp;
+                uint32_t temp;
                 for (i=CHANNELS/2; i<CHANNELS/2+CELLS; i++){
-                    temp = (adc_channel[i]);
-                    cell_temperatures[k] =temp;        //INSERTTT   convert cell temperature to degrees
+                    cell_temperatures[k] = ntc.getTemperature(adc_channel[i]);        //INSERTTT   convert cell temperature to degrees
                     k++;
                 }
 
@@ -148,6 +145,7 @@ void loop() {
                                     Serial.print(cell_voltages[i], DEC);
                                     Serial.print(SEPARATOR);
                             }
+                            Serial.print('\n');
                         }
                         else if ((value_int <= CELLS)&&(value_int > 0)) {
                             Serial.print(cell_voltages[value_int]);
@@ -159,15 +157,16 @@ void loop() {
                 //TO PRINT TEMPERATURES
 
                 else if (strcmp(command, "TCELL") == 0) {
+
                                 if (strcmp(value, "A")==0){
                                         for (i=0; i< CELLS; i++ ) {
-                                                Serial.print(cell_temperatures[i], DEC);
+                                                Serial.print((cell_temperatures[i]), DEC);
                                                 Serial.print(SEPARATOR);
                                         }
+                                        Serial.print('\n');
                                 }
                                 else if ((value_int <= CELLS)&&(value_int > 0)) {
-                                    Serial.print(ntc.getTemperature(cell_temperatures[value_int]), DEC);
-                                    Serial.print('\n');
+                                    Serial.println(cell_temperatures[value_int], DEC);
                                 }
                         else    Serial.print("ERROR");
                 }

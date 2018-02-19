@@ -160,7 +160,7 @@ THERMISTOR::THERMISTOR(){
 }
 
 boolean THERMISTOR::init(thermistorType_t thermistorType_l){
-
+		
 		if(thermistorType_l == CELL_NTC){			// BMSino CELL'S 10k NTCs
 			lut_p = NTCLE100E3103JB0;
 			lut_size = NTCLE100E3103JB0_LUT_SIZE;
@@ -184,3 +184,4 @@ int16_t THERMISTOR::getTemperature(uint16_t ADC_temp_sample){				//aggiornarlo p
 	temp = interpolateLinearly(lut_p, lut_size, ADC_temp_sample)/16;
 	return  temp;
 };
+

@@ -21,7 +21,7 @@
 // TYPES
 typedef struct{
 	uint16_t 	ADC_value;		// value read back from the 10bit-ADC
-	int16_t		Temperature;	// expressed as 1/16 ï¿½C
+	int16_t		Temperature;	// expressed as 1/16 °C
 }lut_t;
 
 // type of thermistors
@@ -37,10 +37,10 @@ class THERMISTOR{
 	public:
 		THERMISTOR();
 		bool init(thermistorType_t thermistorType_l);
-		int16_t getTemperature(uint16_t ADC_temp_sample);
+		int16_t getTemperature(uint16_t ADC_sample);
 	private:
 		lut_t* lut_p;
-		uint8_t ADCpin, lut_size;
+		uint8_t lut_size;
 		int16_t interpolateLinearly(const lut_t* thermistorLUT_l, uint8_t LUTsize_l, uint16_t ADC_value_l);
 };
 
