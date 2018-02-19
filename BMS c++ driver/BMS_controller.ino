@@ -5,8 +5,8 @@ Authors: F.Garbuglia, M.Unterhorst
 Created: Feb 2018
 
 Description:
-Brief algorithm for Arduino to manage battery charging
-using BMSino
+Brief algorithm for managing battery charging
+using BMSino and Arduino
 
 *****************************************************/
 
@@ -159,8 +159,10 @@ void loop() {
     }
 
     //getting board temperature from analog pin
-
     board_temp= res.getTemperature(analogRead(ONBOARD_NTC_PIN));
+    if (board_temp > BT_TH){  //board temp check
+      myPSU.stopCharging();
+    }
 
     // balancing control
     prev_balance_reg = balance_reg;
@@ -170,19 +172,18 @@ void loop() {
       }
     }
 
-    if ((board_temp < BT_TH)&&(balance_reg != prev_balance_reg)){  //if balance_reg changed and board_temp OK
+    if (balance_reg != prev_balance_reg){  //if balance_reg changed
       myAD.balance_all(balance_reg, 0);     //eternal balancing
     }
-    else myPSU.stopCharging();
 
-
+    // temperatures control
     for( i=0 ; i < myAD.ADinst.scan_cnt/2; i++){
       if (cell_temperatures[i] > T_TH){
         myPSU.stopCharging();
       }
     }
-    //se tutte tensione sopra la soglia allora stopCharging
 
+    //se tutte tensioni sopra la soglia allora stopCharging
     if (balance_reg == full_balance_reg ){
       myPSU.stopCharging();
     }
