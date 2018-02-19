@@ -1,6 +1,6 @@
 /*****************************************************
 
-File: AD7280.cpp
+File: ADserial.h
 Authors: F.Garbuglia, M.Unterhorst
 Created: Feb 2018
 
