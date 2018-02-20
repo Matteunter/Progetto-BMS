@@ -8,12 +8,14 @@ Controls BMSino through external commands,
 using Arduino's serial port
 
 External Commands list:
-- mVCELL A  gives the cell's voltage (A stands for All)
-- TCELL A   gives the cell's temperature in °C (A stands for All)
+- mVCELL A  gives the cell's voltage (A stands for All).
+- TCELL A   gives the cell's temperature in °C (A stands for All).
 - RBCELL A  returns the balancing status (1 stands for balance active
-            0 for not active)
+            0 for not active).
 - SBCELL x  sets the balancing register (x is the 6-bit bitmask,
-            i.e. 000101 for first and third cell balance)
+            i.e. 000101 for first and third cell balance).
+- TBMS      returns the board temperature in °C.
+
 ***************************************************************/
 
 #include <SPI.h>
@@ -172,7 +174,8 @@ void loop() {
                         else    Serial.print("ERROR");
                 }
 
-                //TO PRINT TEMPERATURES
+
+                //TO PRINT CELL TEMPERATURES
 
                 else if (strcmp(command, "TCELL") == 0) {
 
@@ -192,7 +195,6 @@ void loop() {
 
                 //TO PRINT BALANCING MOSFET STATUS
 
-
                 else if (strcmp(command, "RBCELL") == 0) {
                         balance_reg = myAD.readreg(0, 0x14);            //read from balance register
                         Serial.print(balance_reg, BIN);
@@ -201,12 +203,7 @@ void loop() {
                 }
 
 
-
-
-
-
                 //TO ENABLE BALANCING FROM CELL BITMASK
-
 
                 else if (strcmp(command, "SBCELL") == 0) {
                         Serial.println(value);
@@ -218,14 +215,19 @@ void loop() {
                                 }
                                 else {
                                         if (value[i] != '0') error =1;
-
                                 }
                         }
                         if (error == 1) Serial.println("WRONG CELL BALANCING BITMASK");
                         else myAD.balance_all(value_bin, 0 );
-
                 }
 
+
+                //TO PRINT PCB TEMPERATURE
+
+                else if (strcmp(command, "TBMS") == 0) {
+                        Serial.println(board_temp, DEC);
+
+                }
         }
 
 
