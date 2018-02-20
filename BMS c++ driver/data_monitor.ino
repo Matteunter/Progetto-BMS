@@ -74,6 +74,7 @@ int balance_reg;
 
 
 
+
 void setup() {
         digitalWrite(_EN_PIN, HIGH);
         myAD.init(_SS);        //initialize slave AD on pin 10
@@ -92,38 +93,52 @@ void loop() {
         //Serial.print(Serial.available());
         if (Serial.available() > 0){
 
-                int i = 0;
+                int i,k = 0;
+                int separator_found = 0;
                 a = Serial.read();
                 while (a != '\n') {
                         received[i]= a;
                         a = Serial.read();
+                        if (received[i] == SEPARATOR){
+                          separator_found = 1;
+                        }
                         i++;
                 }
 
                 received[i] = '\n';
 
 
+                if (separator_found == 1) {
 
-                i = 0;
+                  i = 0;
 
-                while (received[i] != SEPARATOR){
-                        command[i] = received[i];
+                  while (received[i] != SEPARATOR){
+                          command[i] = received[i];
+                          i++;
+                        }
+
+                        command[i] = '\0';
+
+
+                        k = 0;
                         i++;
+                        while (received[i] != '\n') {
+                          value[k] = received[i];
+                          i++;
+                          k++;
+
+                        }
+                        value[k]= '\0';
                 }
+                else if (separator_found == 0){
 
-                command[i] = '\0';
-
-
-                int k =0;
-                i++;
-                while (received[i] != '\n') {
-                        value[k] = received[i];
-                        i++;
-                        k++;
-
+                  i = 0;
+                  while (received[i] != '\n') {
+                    command[i] = received[i];
+                    i++;
+                  }
+                  command[i] = '\0';
                 }
-                value[k]= '\0';
-
 
                 // Serial.print(command);
                 // Serial.print('\t');
@@ -199,7 +214,6 @@ void loop() {
                         balance_reg = myAD.readreg(0, 0x14);            //read from balance register
                         Serial.print(balance_reg, BIN);
 
-
                 }
 
 
@@ -228,6 +242,9 @@ void loop() {
                         Serial.println(board_temp, DEC);
 
                 }
+
+                else
+                  Serial.println("UNKNOWN COMMAND");
         }
 
 
