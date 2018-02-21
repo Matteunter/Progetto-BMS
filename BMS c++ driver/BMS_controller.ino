@@ -21,73 +21,86 @@ using BMSino and Arduino
 
 
 
-
-#ifndef _SS
+#ifndef PINS
 #define _SS 10
+#define _EN_PIN	5
+#define _ONBOARD_NTC_PIN A4
+#define _CURRENT_OUT_PIN A0
+#define _CURRENT_REF_PIN A1
+#define CELLS 6
+#define CHANNELS 12
+#define SEPARATOR ' '
 #endif
 
-#define _EN_PIN	5
+
+#ifndef LIMITS
 #define C_LIM  0.5
 #define V_LIM  13
 #define V_TH  4
-
-
 #define T_TH  50
-#define ONBOARD_NTC_PIN A4
 #define BT_TH 60
+#endif
 
 
+///////////////////////////////////////////////////////////////////////////////
+//GLOBAL VARIABLES
+///////////////////////////////////////////////////////////////////////////////
 
-
-long int startup_time;
 AD7280 myAD;                  //1 AD class allocation
 PSU    myPSU;
 THERMISTOR res;              // 1 onboard resistor class allocation
 THERMISTOR ntc;            // 6 cell resistor class allocation
 //CURRENT_SENSOR cell_curr;
 
-int board_temp;     //temperatura della board
+int16_t board_temp;     //temperatura della board
 
 
 byte a;
+byte balance_reg;
+byte full_balance_reg;
+byte prev_balance_reg;
+int sum;
+int k=0;
+int i=0;
+uint16_t adc_channel[CHANNELS];
+uint16_t cell_temperatures[CELLS];
+uint16_t cell_voltages[CELLS];
+
+long int startup_time;
+long int curr_time;
 
 
 
-
-
+///////////////////////////////////////////////////////////////////////////////
+//SETUP
+///////////////////////////////////////////////////////////////////////////////
 void setup() {
   digitalWrite(_EN_PIN, HIGH);
   Serial.begin(38400);
+  //Serial2.begin(9600);  for pc communication
+  delay(1000);  //wait to set coomunication
   myAD.init(_SS);        //initialize slave AD on pin 10
   res.init(ONBOARD_NTC);     //initialize resistor as onboard ntc
   ntc.init(CELL_NTC);      //initialize resistors ad cell ntc
   //cell_curr.init(ACS712);   //setup Hall Effect Sensor
+
+  //print_table();
 }
 
 
 
 
-
-
-
-
-
+///////////////////////////////////////////////////////////////////////////////
+//LOOP
+///////////////////////////////////////////////////////////////////////////////
 void loop() {
-
-  int sum;
-  int k=0;
-  int i=0;
-  uint16_t adc_channel[myAD.ADinst.scan_cnt];
-  uint16_t cell_temperatures[myAD.ADinst.scan_cnt];
-  uint16_t cell_voltages[myAD.ADinst.scan_cnt];
-  byte balance_reg = 0b00000000;
+  balance_reg = 0b00000000;
   myAD.balance_all(balance_reg, 0);
-  byte prev_balance_reg;
+  prev_balance_reg;
+  full_balance_reg = 0b00000000;
 
-  byte full_balance_reg = 0b00000000;
 
-
-  for (i = 0; i<myAD.ADinst.scan_cnt; i++ ){
+  for (i = 0; i<CHANNELS; i++ ){
     full_balance_reg = full_balance_reg | (1<<i);
   }
 
@@ -95,30 +108,31 @@ void loop() {
   do {
   //reading cell Values
 
-  sum = myAD.read_all( myAD.ADinst.scan_cnt, &adc_channel[0]);
+  sum = myAD.read_all( CHANNELS, &adc_channel[0]);
 
   //separate channels between voltages and temperatures
 
 
-  for (i=0;i<myAD.ADinst.scan_cnt/2; i++){
+  for (int i=0;i<CELLS; i++){
     cell_voltages[i]=(adc_channel[i]*0.976)+1000;   //
   }
 
-  for (i=myAD.ADinst.scan_cnt/2+1;i<myAD.ADinst.scan_cnt; i++){
+  for (int i=CHANNELS/2; i<CHANNELS/2+CELLS; i++){
     cell_temperatures[i]=ntc.getTemperature(adc_channel[i]);
   }
 
   //getting board temperature from analog pin
 
-  board_temp= res.getTemperature(analogRead(ONBOARD_NTC_PIN));
+  board_temp= res.getTemperature(analogRead(_ONBOARD_NTC_PIN));
+  curr_time = millis() - startup_time;
+
+  //print_all(cell_voltages, cell_temperatures, curr_time, 0, board_temp);
 
   k++;    //
-
-  if (k == myAD.ADinst.scan_cnt/2) k = 0;
-
+  if (k == CELLS) k = 0;
   //wait the end of discharge or overheating
 
-  } while ((sum > (myAD.ADinst.scan_cnt/2 * V_TH))||(cell_temperatures[k]> T_TH));
+} while ((sum > (CELLS * V_TH))||(cell_temperatures[k]> T_TH));
 
 
 
@@ -146,27 +160,31 @@ void loop() {
 
     //ciclo per controllore che tutte le celle siano bilanciate
 
-    myAD.read_all( myAD.ADinst.scan_cnt, &adc_channel[0]);
+    myAD.read_all(CHANNELS, &adc_channel[0]);
 
     //separate channels between voltages and temperatures
 
-    for (i=0;i<myAD.ADinst.scan_cnt/2; i++){
+    for (int i=0;i<CELLS; i++){
       cell_voltages[i]=(adc_channel[i]*0.976)+1000;   //
     }
 
-    for (i=myAD.ADinst.scan_cnt/2+1;i<myAD.ADinst.scan_cnt; i++){
+    for (int i=CHANNELS/2; i<CHANNELS/2+CELLS; i++){
       cell_temperatures[i]=ntc.getTemperature(adc_channel[i]);
     }
 
     //getting board temperature from analog pin
-    board_temp= res.getTemperature(analogRead(ONBOARD_NTC_PIN));
+    board_temp= res.getTemperature(analogRead(_ONBOARD_NTC_PIN));
+    //getting acquisition instant
+    curr_time = millis() - startup_time;
+    //print_all(cell_voltages, cell_temperatures, curr_time, 0, board_temp);
+
     if (board_temp > BT_TH){  //board temp check
       myPSU.stopCharging();
     }
 
     // balancing control
     prev_balance_reg = balance_reg;
-    for( i=0 ; i < myAD.ADinst.scan_cnt/2; i++){
+    for( i=0 ; i <CELLS; i++){
       if (cell_voltages[i] > V_TH){
         balance_reg = balance_reg | (1 << i);
       }
@@ -177,7 +195,7 @@ void loop() {
     }
 
     // temperatures control
-    for( i=0 ; i < myAD.ADinst.scan_cnt/2; i++){
+    for( i=0 ; i < CELLS; i++){
       if (cell_temperatures[i] > T_TH){
         myPSU.stopCharging();
       }
@@ -190,4 +208,58 @@ void loop() {
 
   }
 
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//AUXILIARY FUNCTIONS
+///////////////////////////////////////////////////////////////////////////////
+
+// PRINT TEXT ITEM OF A TABLE OF ALL MEASUREMENTS
+//////////////////////////////////////////////////
+void print_table() {
+    for(int i =0 ; i < CHANNELS ; i++ )
+  {
+    if ((i/(CELLS) %2) == 0 )
+    {
+    Serial.print("V");
+    Serial.print( (1+i),DEC );
+    Serial.print("\t");
+    }
+    else
+    {
+    Serial.print("T");
+    Serial.print( (1+i-6),DEC );
+    Serial.print("\t");
+    }
+  }
+i=0;
+
+Serial.print("BOARD_TEMP\t");
+Serial.print("CURRENT\t");
+Serial.print("CHARGING STATE\t");
+Serial.print("\n");
+startup_time = millis();
+}
+
+
+// PRINT ONE ROW OF A TABLE OF ALL MEASUREMENTS
+//////////////////////////////////////////////
+void print_all (uint16_t * cell_voltages, uint16_t * cell_temperatures, long int curr_time, int cell_current, int16_t board_temp) {
+   //calcolo temperatura degli ntc e rimetto dentro adc-channel
+  Serial.print(curr_time, DEC);
+  Serial.print("\t");
+  for(int i =0 ; i < CELLS ; i++ )    // print voltages and temperature
+  {
+    Serial.print(cell_voltages[i], DEC);
+    Serial.print("\t");
+  }
+  for(int i =0 ; i < CELLS ; i++ )   // print voltages and temperature
+  {
+    Serial.print(cell_temperatures[i], DEC);
+    Serial.print("\t");
+  }
+  Serial.print(board_temp, DEC);       //print board temperature
+  Serial.print("\t");
+  Serial.print(cell_current,BIN);
+  Serial.print("\n");
 }

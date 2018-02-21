@@ -26,22 +26,22 @@ External Commands list:
 #include "thermistor.h"
 #include "current_sensor.h"
 #include "ADserial.h"
+#include "psu.h"
 
 
-
-#ifndef _SS
+#ifndef PINS
 #define _SS 10
-
-#endif
-
 #define _EN_PIN	5
 #define _ONBOARD_NTC_PIN A4
 #define _CURRENT_OUT_PIN A0
 #define _CURRENT_REF_PIN A1
-
 #define CELLS 6
 #define CHANNELS 12
 #define SEPARATOR ' '
+#endif
+
+
+
 
 long int startup_time;
 AD7280 myAD;                  //1 AD class allocation
@@ -150,11 +150,7 @@ void loop() {
                 sscanf(value, "%d", &value_int);        //convert value string to integer
                 //Serial.print(value_int, DEC);
 
-
                 myAD.read_all(CHANNELS, &adc_channel[0]);          //read all channels
-
-
-
                 curr_time = millis()- startup_time;
 
                 //separate voltages from temperatures
@@ -163,7 +159,7 @@ void loop() {
                 battery_voltage_mv = battery_voltage_mv + cell_voltages[i] ;    //calc total voltage across the battery
                 }
                 k = 0;
-                uint32_t temp;
+
                 for (i=CHANNELS/2; i<CHANNELS/2+CELLS; i++){
                     cell_temperatures[k] = ntc.getTemperature(adc_channel[i]);        //INSERTTT   convert cell temperature to degrees
                     k++;
@@ -183,17 +179,15 @@ void loop() {
                             Serial.print('\n');
                         }
                         else if ((value_int <= CELLS)&&(value_int > 0)) {
-                            Serial.print(cell_voltages[value_int]);
-                            Serial.print('\n');
+                            Serial.println(cell_voltages[value_int]);
                         }
-                        else    Serial.print("ERROR");
+                        else    Serial.println("ERROR");
                 }
 
 
                 //TO PRINT CELL TEMPERATURES
 
                 else if (strcmp(command, "TCELL") == 0) {
-
                                 if (strcmp(value, "A")==0){
                                         for (i=0; i< CELLS; i++ ) {
                                                 Serial.print((cell_temperatures[i]), DEC);
@@ -213,7 +207,6 @@ void loop() {
                 else if (strcmp(command, "RBCELL") == 0) {
                         balance_reg = myAD.readreg(0, 0x14);            //read from balance register
                         Serial.print(balance_reg, BIN);
-
                 }
 
 
@@ -240,16 +233,11 @@ void loop() {
 
                 else if (strcmp(command, "TBMS") == 0) {
                         Serial.println(board_temp, DEC);
-
                 }
 
                 else
                   Serial.println("UNKNOWN COMMAND");
         }
-
-
-
-
         delay(2000);
         return;
 }
