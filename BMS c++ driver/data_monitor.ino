@@ -81,8 +81,8 @@ void setup() {
 
 
         startup_time = millis();
-        Serial.begin(9600);
-
+        Serial.begin(115200);
+        delay(1000);
         res.init(ONBOARD_NTC);     //initialize resistor as onboard ntc
         ntc.init(CELL_NTC);      //initialize resistor as cell ntc
 }
@@ -207,6 +207,7 @@ void loop() {
                 else if (strcmp(command, "RBCELL") == 0) {
                         balance_reg = myAD.readreg(0, 0x14);            //read from balance register
                         Serial.print(balance_reg, BIN);
+                        Serial.print('\n')
                 }
 
 
@@ -232,12 +233,12 @@ void loop() {
                 //TO PRINT PCB TEMPERATURE
 
                 else if (strcmp(command, "TBMS") == 0) {
-                        Serial.println(board_temp, DEC);
+                        Serial.print(board_temp, DEC);
+                        Serial.print('\n')
                 }
 
-                else
-                  Serial.println("UNKNOWN COMMAND");
+//                else
+//                  Serial.println("UNKNOWN COMMAND");
         }
-        delay(2000);
         return;
 }
