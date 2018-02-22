@@ -307,7 +307,7 @@ void AD7280::balance_all(byte cell_num, uint8_t timer_sec)
   int i=5;
   while(i>=0) {
     //Serial.println(cell_num>>i, BIN);
-    Serial.println((cell_num>>i)& 0x01, BIN);
+//    Serial.println((cell_num>>i)& 0x01, BIN);
     if (((cell_num>>i)&(0x01)) == 1){
 
     writereg(AD7280A_DEVADDR_MASTER, (0x1A-i), 1, timer_sec);
@@ -321,7 +321,7 @@ void AD7280::balance_all(byte cell_num, uint8_t timer_sec)
 
 
   }
-  Serial.println(cell_num_LSB,BIN);
+//  Serial.println(cell_num_LSB,BIN);
   writereg(AD7280A_DEVADDR_MASTER, 0x14, 1, cell_num_LSB<<2); //Cell balance
 
  return 0;

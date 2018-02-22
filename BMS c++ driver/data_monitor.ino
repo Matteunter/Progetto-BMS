@@ -69,6 +69,8 @@ char value[25];
 int value_int;
 byte value_bin;
 int balance_reg;
+int l;
+byte LED;
 
 
 
@@ -76,19 +78,28 @@ int balance_reg;
 
 
 void setup() {
+        pinMode(A5, OUTPUT);
+        pinMode(_EN_PIN, INPUT);
         digitalWrite(_EN_PIN, HIGH);
+
         myAD.init(_SS);        //initialize slave AD on pin 10
-
-
         startup_time = millis();
+
         Serial.begin(115200);
         delay(1000);
+
         res.init(ONBOARD_NTC);     //initialize resistor as onboard ntc
         ntc.init(CELL_NTC);      //initialize resistor as cell ntc
 }
 
 
 void loop() {
+        //led blink
+        if(l % 100 == 0){
+          LED = LED ^ 1;
+          digitalWrite(A5, LED);
+        }
+        l++;
 
         //Serial.print(Serial.available());
         if (Serial.available() > 0){
@@ -214,7 +225,7 @@ void loop() {
                 //TO ENABLE BALANCING FROM CELL BITMASK
 
                 else if (strcmp(command, "SBCELL") == 0) {
-                        Serial.println(value);
+                        //Serial.println(value);
                         int error=0;
                         value_bin= 0x00;
                         for (int i=0; value[i]!=NULL; i++){
@@ -240,6 +251,6 @@ void loop() {
 //                else
 //                  Serial.println("UNKNOWN COMMAND");
         }
-        delay(2000);
+        delay(10);
         return;
 }
