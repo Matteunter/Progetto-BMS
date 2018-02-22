@@ -341,7 +341,7 @@ bool AD7280::init(int ss)
 	ADinst.slave_select = ss;
 	setup_spi32(ADinst.slave_select);
 	Serial.begin(9600);
-	Serial.println("Setup SPI32 for AD7280a chip");
+	//Serial.println("Setup SPI32 for AD7280a chip");
 	ADinst.readback_delay_ms = 10; 	// 10 ms wait time.
 	ADinst.cell_threshhigh = 0xFF;
 	ADinst.aux_threshhigh = 0xFF;
