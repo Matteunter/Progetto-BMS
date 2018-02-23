@@ -30,6 +30,7 @@ External Commands list:
 
 
 #ifndef PINS
+#define PINS
 #define _SS 10
 #define _EN_PIN	5
 #define _ONBOARD_NTC_PIN A4
@@ -40,7 +41,7 @@ External Commands list:
 #define SEPARATOR ' '
 #endif
 
-
+#define THERMAL_SHUTDOWN 80
 
 
 long int startup_time;
@@ -101,6 +102,13 @@ void loop() {
         }
         l++;
 
+        board_temp= res.getTemperature(analogRead(_ONBOARD_NTC_PIN));       //board temperature acquisition and convertion
+        if (board_temp > THERMAL_SHUTDOWN){
+             myAD.balance_all(00000000, 0 );
+             Serial.print("thermal shutdown occurred");
+             Serial.print('\n');
+        }
+
         //Serial.print(Serial.available());
         if (Serial.available() > 0){
 
@@ -155,7 +163,6 @@ void loop() {
                 // Serial.print('\t');
                 // Serial.print(SEPARATOR);
                 // Serial.print('\t');
-
                 // Serial.print('\n');
 
                 sscanf(value, "%d", &value_int);        //convert value string to integer
@@ -176,7 +183,6 @@ void loop() {
                     k++;
                 }
 
-                board_temp= res.getTemperature(analogRead(_ONBOARD_NTC_PIN));       //board temperature acquisition and convertion
 
 
                 // TO PRINT VOLTAGES
