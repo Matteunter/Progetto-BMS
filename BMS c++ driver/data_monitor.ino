@@ -42,7 +42,11 @@ External Commands list:
 #endif
 
 #define THERMAL_SHUTDOWN 80
+#define CELL_THERMAL_SHUTDOWN 50
 
+///////////////////////////////////////////////////////////////////////////////
+//GLOBAL VARIABLES
+///////////////////////////////////////////////////////////////////////////////
 
 long int startup_time;
 AD7280 myAD;                  //1 AD class allocation
@@ -74,10 +78,9 @@ int l;
 byte LED;
 
 
-
-
-
-
+///////////////////////////////////////////////////////////////////////////////
+//SETUP
+///////////////////////////////////////////////////////////////////////////////
 void setup() {
         pinMode(A5, OUTPUT);
         pinMode(_EN_PIN, INPUT);
@@ -94,6 +97,10 @@ void setup() {
 }
 
 
+
+///////////////////////////////////////////////////////////////////////////////
+//LOOP
+///////////////////////////////////////////////////////////////////////////////
 void loop() {
         //led blink
         if(l % 100 == 0){
@@ -102,15 +109,50 @@ void loop() {
         }
         l++;
 
+        //GETTING ALL ADC INFORMATIONS
+
+        myAD.read_all(CHANNELS, &adc_channel[0]);          //read all channels
+        curr_time = millis()- startup_time;
+
+        //separate voltages from temperatures
+        for (int i=0;i<CELLS; i++){
+        cell_voltages[i]=(adc_channel[i]*0.976)+1000;
+        battery_voltage_mv = battery_voltage_mv + cell_voltages[i] ;    //calc total voltage across the battery
+        }
+        int k = 0;
+
+        for (int i=CHANNELS/2; i<CHANNELS/2+CELLS; i++){
+            cell_temperatures[k] = ntc.getTemperature(adc_channel[i]);        //INSERTTT   convert cell temperature to degrees
+            k++;
+        }
+
         board_temp= res.getTemperature(analogRead(_ONBOARD_NTC_PIN));       //board temperature acquisition and convertion
+
+
+        //CONTROLLING ALL TEMPERATURES
+
         if (board_temp > THERMAL_SHUTDOWN){
              myAD.balance_all(00000000, 0 );
              Serial.print("thermal shutdown occurred");
              Serial.print('\n');
         }
+             //board temperature acquisition and convertion
+        for(int i=0; i<CELLS; i++){
+            if (cell_temperatures[i] > THERMAL_SHUTDOWN){
+             Serial.print("CELL ");
+             Serial.print(i, DEC);
+             Serial.print(" OVERHEATING");
+             Serial.print('\n');
+            }
+        }
+
 
         //Serial.print(Serial.available());
         if (Serial.available() > 0){
+
+                ///////////////////////////////////////
+                //COMMAND ACQUISITION
+                ///////////////////////////////////////
 
                 int i,k = 0;
                 int separator_found = 0;
@@ -123,34 +165,24 @@ void loop() {
                         }
                         i++;
                 }
-
                 received[i] = '\n';
-
-
                 if (separator_found == 1) {
-
                   i = 0;
-
                   while (received[i] != SEPARATOR){
                           command[i] = received[i];
                           i++;
                         }
-
                         command[i] = '\0';
-
-
                         k = 0;
                         i++;
                         while (received[i] != '\n') {
                           value[k] = received[i];
                           i++;
                           k++;
-
                         }
                         value[k]= '\0';
                 }
                 else if (separator_found == 0){
-
                   i = 0;
                   while (received[i] != '\n') {
                     command[i] = received[i];
@@ -165,27 +197,15 @@ void loop() {
                 // Serial.print('\t');
                 // Serial.print('\n');
 
+                //COMMAND VALUE CONVERTION
                 sscanf(value, "%d", &value_int);        //convert value string to integer
                 //Serial.print(value_int, DEC);
 
-                myAD.read_all(CHANNELS, &adc_channel[0]);          //read all channels
-                curr_time = millis()- startup_time;
 
-                //separate voltages from temperatures
-                for (i=0;i<CELLS; i++){
-                cell_voltages[i]=(adc_channel[i]*0.976)+1000;
-                battery_voltage_mv = battery_voltage_mv + cell_voltages[i] ;    //calc total voltage across the battery
-                }
-                k = 0;
+                //////////////////////////////////
+                // COMMAND DETECTION
+                //////////////////////////////////
 
-                for (i=CHANNELS/2; i<CHANNELS/2+CELLS; i++){
-                    cell_temperatures[k] = ntc.getTemperature(adc_channel[i]);        //INSERTTT   convert cell temperature to degrees
-                    k++;
-                }
-
-
-
-                // TO PRINT VOLTAGES
 
                 if (strcmp(command, "mVCELL") == 0) {
                         if (strcmp(value, "A")==0){
@@ -247,16 +267,21 @@ void loop() {
                 }
 
 
-                //TO PRINT PCB TEMPERATURE
+                //TO PRINT BALANCE RESISTORS TEMPERATURE
 
                 else if (strcmp(command, "TBMS") == 0) {
                         Serial.print(board_temp, DEC);
                         Serial.print('\n');
                 }
 
-//                else
-//                  Serial.println("UNKNOWN COMMAND");
+                else
+                  Serial.println("UNKNOWN COMMAND");
         }
         delay(10);
         return;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+//END
+///////////////////////////////////////////////////////////////////////////////
