@@ -109,46 +109,50 @@ void loop() {
         }
         l++;
 
-        //GETTING ALL ADC INFORMATIONS
-
-        myAD.read_all(CHANNELS, &adc_channel[0]);          //read all channels
-        curr_time = millis()- startup_time;
-
-        //separate voltages from temperatures
-        for (int i=0;i<CELLS; i++){
-        cell_voltages[i]=(adc_channel[i]*0.976)+1000;
-        battery_voltage_mv = battery_voltage_mv + cell_voltages[i] ;    //calc total voltage across the battery
-        }
-        int k = 0;
-
-        for (int i=CHANNELS/2; i<CHANNELS/2+CELLS; i++){
-            cell_temperatures[k] = ntc.getTemperature(adc_channel[i]);        //INSERTTT   convert cell temperature to degrees
-            k++;
-        }
-
-        board_temp= res.getTemperature(analogRead(_ONBOARD_NTC_PIN));       //board temperature acquisition and convertion
 
 
-        //CONTROLLING ALL TEMPERATURES
 
-        if (board_temp > THERMAL_SHUTDOWN){
-             myAD.balance_all(00000000, 0 );
-             Serial.print("thermal shutdown occurred");
-             Serial.print('\n');
-        }
-             //board temperature acquisition and convertion
-        for(int i=0; i<CELLS; i++){
-            if (cell_temperatures[i] > THERMAL_SHUTDOWN){
-             Serial.print("CELL ");
-             Serial.print(i, DEC);
-             Serial.print(" OVERHEATING");
-             Serial.print('\n');
-            }
-        }
 
 
         //Serial.print(Serial.available());
         if (Serial.available() > 0){
+
+            //GETTING ALL ADC INFORMATIONS
+
+            myAD.read_all(CHANNELS, &adc_channel[0]);          //read all channels
+            curr_time = millis()- startup_time;
+
+            //separate voltages from temperatures
+            for (int i=0;i<CELLS; i++){
+            cell_voltages[i]=(adc_channel[i]*0.976)+1000;
+            battery_voltage_mv = battery_voltage_mv + cell_voltages[i] ;    //calc total voltage across the battery
+            }
+            int k = 0;
+
+            for (int i=CHANNELS/2; i<CHANNELS/2+CELLS; i++){
+                cell_temperatures[k] = ntc.getTemperature(adc_channel[i]);        //INSERTTT   convert cell temperature to degrees
+                k++;
+            }
+
+            board_temp= res.getTemperature(analogRead(_ONBOARD_NTC_PIN));       //board temperature acquisition and convertion
+
+
+            //CONTROLLING ALL TEMPERATURES
+
+            if (board_temp > THERMAL_SHUTDOWN){
+                 myAD.balance_all(00000000, 0 );
+                 Serial.print("thermal shutdown occurred");
+                 Serial.print('\n');
+            }
+                 //board temperature acquisition and convertion
+            for(int i=0; i<CELLS; i++){
+                if (cell_temperatures[i] > THERMAL_SHUTDOWN){
+                 Serial.print("CELL ");
+                 Serial.print(i, DEC);
+                 Serial.print(" OVERHEATING");
+                 Serial.print('\n');
+                }
+            }
 
                 ///////////////////////////////////////
                 //COMMAND ACQUISITION
