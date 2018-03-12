@@ -41,7 +41,7 @@ External Commands list:
 #define SEPARATOR ' '
 #endif
 
-#define THERMAL_SHUTDOWN 80
+#define THERMAL_SHUTDOWN 85
 #define CELL_THERMAL_SHUTDOWN 50
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -109,7 +109,11 @@ void loop() {
         }
         l++;
 
-        //GETTING ALL ADC INFORMATIONS
+
+
+        //Serial.print(Serial.available());
+        if (Serial.available() > 0){
+                //GETTING ALL ADC INFORMATIONS
 
         myAD.read_all(CHANNELS, &adc_channel[0]);          //read all channels
         curr_time = millis()- startup_time;
@@ -137,20 +141,16 @@ void loop() {
              Serial.print('\n');
         }
              //board temperature acquisition and convertion
-        for(int i=0; i<CELLS; i++){
-            if (cell_temperatures[i] > THERMAL_SHUTDOWN){
-             Serial.print("CELL ");
-             Serial.print(i, DEC);
-             Serial.print(" OVERHEATING");
-             Serial.print('\n');
-            }
-        }
+//        for(int i=0; i<CELLS; i++){
+//            if (cell_temperatures[i] > THERMAL_SHUTDOWN){
+//             Serial.print("CELL ");
+//             Serial.print(i, DEC);
+//             Serial.print(" OVERHEATING");
+//             Serial.print('\n');
+//            }
+//        }
+//
 
-
-
-
-        //Serial.print(Serial.available());
-        if (Serial.available() > 0){
 
 
 
@@ -158,7 +158,7 @@ void loop() {
                 //COMMAND ACQUISITION
                 ///////////////////////////////////////
 
-                int i,k = 0;
+                int i = 0;
                 int separator_found = 0;
                 a = Serial.read();
                 while (a != '\n') {
@@ -281,7 +281,7 @@ void loop() {
                 else
                   Serial.println("UNKNOWN COMMAND");
         }
-        delay(10);
+        //delay(10);
         return;
 }
 

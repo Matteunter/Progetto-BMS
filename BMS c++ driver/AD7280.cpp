@@ -251,6 +251,7 @@ uint32_t AD7280::read_all(uint32_t cnt, uint16_t *array)			/*Write to all the Co
 			AD7280A_CTRL_HB_CONV_INPUT_ALL |
 			AD7280A_CTRL_HB_CONV_RES_READ_ALL |
 			AD7280A_CTRL_HB_CONV_START_CS |
+      AD7280A_CTRL_HB_CONV_AVG_8|
 			ADinst.ctrl_hb);
 
 	wait();
@@ -310,7 +311,7 @@ void AD7280::balance_all(byte cell_num, uint8_t timer_sec)
 //    Serial.println((cell_num>>i)& 0x01, BIN);
     if (((cell_num>>i)&(0x01)) == 1){
 
-    writereg(AD7280A_DEVADDR_MASTER, (0x1A-i), 1, timer_sec);
+    //writereg(AD7280A_DEVADDR_MASTER, (0x1A-i), 1, timer_sec);  //decomment if you need cell balance timers
 
     cell_num_LSB = cell_num_LSB | (0x01<<(5-i));
 
