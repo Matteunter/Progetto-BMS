@@ -65,17 +65,18 @@ int16_t board_temp;
 uint16_t adc_channel[CHANNELS];
 uint16_t cell_temperatures[CELLS];
 uint16_t cell_voltages[CELLS];
+uint8_t bal_reg[6];
 int battery_voltage_mv=0;
-
 
 char received[50];
 char command[25];
 char value[25];
 int value_int;
 byte value_bin;
-int balance_reg;
+//int balance_reg;
 int l;
 byte LED;
+uint32_t var_temp;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -246,9 +247,24 @@ void loop() {
                 //TO PRINT BALANCING MOSFET STATUS
 
                 else if (strcmp(command, "RBCELL") == 0) {
+                    var_temp=0x01C2B6E2;
+                    transferspi32(&var_temp,10);
+                    var_temp=0x038A12B2;
+                    transferspi32(&var_temp,10);
+                    var_temp=0xF800030A;
+                    transferspi32(&var_temp,10);
+                    var_temp=(var_temp>>15)&0x3F;
+                    //print var_temp in reverse
+                    for(i=0; i<6 ; i++)
+                      {
+                       Serial.print((var_temp>>i & 0x01), DEC);
+                      }
+                      Serial.print('\n');
+                  /*
                         balance_reg = myAD.readreg(0, 0x14);            //read from balance register
                         Serial.print(balance_reg, BIN);
                         Serial.print('\n');
+                  */
                 }
 
 
